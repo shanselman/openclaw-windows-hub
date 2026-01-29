@@ -12,11 +12,22 @@ jobs:
     runs-on: windows-latest
     steps:
     - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
     - name: Setup .NET 10
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 10.0.x
+
+    - name: Install GitVersion
+      uses: gittools/actions/gitversion/setup@v3
+      with:
+        versionSpec: '6.x'
+
+    - name: Determine Version
+      id: gitversion
+      uses: gittools/actions/gitversion/execute@v3
 
     - name: Restore dependencies
       run: dotnet restore
@@ -32,6 +43,10 @@ jobs:
 
     - name: Run Tests
       run: dotnet test tests/Moltbot.Shared.Tests --no-build -c Debug --verbosity normal
+
+    outputs:
+      semVer: ${{ steps.gitversion.outputs.semVer }}
+      majorMinorPatch: ${{ steps.gitversion.outputs.majorMinorPatch }}
 
   build:
     needs: test
@@ -52,16 +67,38 @@ jobs:
       run: dotnet restore src/Moltbot.Tray -r ${{ matrix.rid }}
 
     - name: Build Tray App (Release)
-      run: dotnet build src/Moltbot.Tray --no-restore -c Release -r ${{ matrix.rid }}
+      run: dotnet build src/Moltbot.Tray --no-restore -c Release -r ${{ matrix.rid }} -p:Version=${{ needs.test.outputs.semVer }}
 
     - name: Publish Tray App
-      run: dotnet publish src/Moltbot.Tray -c Release -r ${{ matrix.rid }} --self-contained -p:PublishSingleFile=true -o publish-${{ matrix.rid }}
+      run: dotnet publish src/Moltbot.Tray -c Release -r ${{ matrix.rid }} --self-contained -p:PublishSingleFile=true -p:Version=${{ needs.test.outputs.semVer }} -o publish
+
+    - name: Azure Login for Signing
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: azure/login@v2
+      with:
+        creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
+
+    - name: Sign Executable
+      if: startsWith(github.ref, 'refs/tags/v')
+      uses: azure/trusted-signing-action@v0
+      with:
+        azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+        endpoint: https://wus2.codesigning.azure.net/
+        trusted-signing-account-name: hanselman
+        certificate-profile-name: WindowsEdgeLight
+        files-folder: publish
+        files-folder-filter: exe
+        file-digest: SHA256
+        timestamp-rfc3161: http://timestamp.acs.microsoft.com
+        timestamp-digest: SHA256
 
     - name: Upload Tray Artifact
       uses: actions/upload-artifact@v4
       with:
         name: moltbot-tray-${{ matrix.rid }}
-        path: publish-${{ matrix.rid }}/
+        path: publish/
 
   build-extension:
     needs: test
@@ -91,13 +128,15 @@ jobs:
         path: src/Moltbot.CommandPalette/bin/${{ matrix.platform }}/Debug/
 
   release:
-    needs: [build, build-extension]
+    needs: [test, build, build-extension]
     if: startsWith(github.ref, 'refs/tags/v')
-    runs-on: ubuntu-latest
+    runs-on: windows-latest
     permissions:
       contents: write
 
     steps:
+    - uses: actions/checkout@v4
+
     - name: Download win-x64 tray artifact
       uses: actions/download-artifact@v4
       with:
@@ -110,28 +149,73 @@ jobs:
         name: moltbot-tray-win-arm64
         path: artifacts/tray-win-arm64
 
+    # Create ZIP files for Updatum auto-update (needs "win-x64" in filename)
+    - name: Create Release ZIPs
+      run: |
+        Compress-Archive -Path artifacts/tray-win-x64/* -DestinationPath MoltbotTray-${{ needs.test.outputs.majorMinorPatch }}-win-x64.zip
+        Compress-Archive -Path artifacts/tray-win-arm64/* -DestinationPath MoltbotTray-${{ needs.test.outputs.majorMinorPatch }}-win-arm64.zip
+
+    # Inno Setup installer for x64
+    - name: Install Inno Setup
+      run: choco install innosetup -y
+
+    - name: Copy x64 exe for installer
+      run: |
+        mkdir publish
+        copy artifacts/tray-win-x64/Moltbot.Tray.exe publish/
+
+    - name: Build Installer (x64)
+      run: |
+        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DMyAppVersion=${{ needs.test.outputs.majorMinorPatch }} installer.iss
+
+    - name: Azure Login for Signing
+      uses: azure/login@v2
+      with:
+        creds: '{"clientId":"${{ secrets.AZURE_CLIENT_ID }}","clientSecret":"${{ secrets.AZURE_CLIENT_SECRET }}","subscriptionId":"${{ secrets.AZURE_SUBSCRIPTION_ID }}","tenantId":"${{ secrets.AZURE_TENANT_ID }}"}'
+
+    - name: Sign Installer
+      uses: azure/trusted-signing-action@v0
+      with:
+        azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+        endpoint: https://wus2.codesigning.azure.net/
+        trusted-signing-account-name: hanselman
+        certificate-profile-name: WindowsEdgeLight
+        files-folder: Output
+        files-folder-filter: exe
+        file-digest: SHA256
+        timestamp-rfc3161: http://timestamp.acs.microsoft.com
+        timestamp-digest: SHA256
+
     - name: Create Release
       uses: softprops/action-gh-release@v2
       with:
         generate_release_notes: true
         files: |
-          artifacts/tray-win-x64/Moltbot.Tray.exe
-          artifacts/tray-win-arm64/Moltbot.Tray.exe
+          Output/MoltbotTray-Setup.exe
+          MoltbotTray-${{ needs.test.outputs.majorMinorPatch }}-win-x64.zip
+          MoltbotTray-${{ needs.test.outputs.majorMinorPatch }}-win-arm64.zip
         body: |
           ## Moltbot Windows Hub ${{ github.ref_name }}
 
           ### Downloads
-          - **x64**: `Moltbot.Tray.exe` (Intel/AMD 64-bit)
-          - **arm64**: `Moltbot.Tray.exe` (Windows on ARM)
+          - **Installer**: `MoltbotTray-Setup.exe` - Windows installer (x64, recommended)
+          - **Portable x64**: `MoltbotTray-${{ needs.test.outputs.majorMinorPatch }}-win-x64.zip` - Intel/AMD 64-bit
+          - **Portable ARM64**: `MoltbotTray-${{ needs.test.outputs.majorMinorPatch }}-win-arm64.zip` - Windows on ARM
+
+          ### Features
+          - 🦞 System tray integration with gateway status
+          - 🔄 Auto-updates from GitHub Releases
+          - ✅ Code-signed with Azure Trusted Signing
 
           ### Requirements
           - Windows 10 version 1903 or later
-          - .NET 10 Runtime (or use self-contained exe)
           - [WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)
           - Moltbot gateway running locally
 
           ### Quick Start
-          1. Download the executable for your architecture
-          2. Run `Moltbot.Tray.exe`
+          1. Run the installer or extract the ZIP
+          2. Launch `Moltbot.Tray.exe`
           3. Right-click tray icon → Settings
           4. Enter your gateway URL and token
