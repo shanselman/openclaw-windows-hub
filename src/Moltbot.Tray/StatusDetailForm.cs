@@ -106,7 +106,7 @@ public class StatusDetailForm : Form
         var sb = new StringBuilder();
 
         // Header
-        sb.AppendLine("⚡ CLAWDBOT STATUS");
+        sb.AppendLine("⚡ MOLTBOT STATUS");
         sb.AppendLine(new string('─', 40));
         sb.AppendLine();
 

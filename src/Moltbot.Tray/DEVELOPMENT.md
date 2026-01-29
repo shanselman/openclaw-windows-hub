@@ -2,7 +2,7 @@
 
 ## Architecture Overview
 
-This Windows system tray application is built with .NET 9 and Windows Forms, designed to be lightweight and efficient while providing seamless integration with the Moltbot gateway. It mirrors the macOS menu bar app's functionality for Windows users.
+This Windows system tray application is built with .NET 10 and Windows Forms, designed to be lightweight and efficient while providing seamless integration with the Moltbot gateway. It mirrors the macOS menu bar app's functionality for Windows users.
 
 ### Component Architecture
 
@@ -119,7 +119,7 @@ Without a key, the user is prompted before sending. With a key, the message is s
 
 ### Prerequisites
 
-- .NET 9 SDK
+- .NET 10 SDK
 - Windows 10 SDK (19041+) — cross-compilation from Linux supported via `EnableWindowsTargeting`
 - WebView2 Runtime (for chat panel, optional at runtime)
 
@@ -140,7 +140,7 @@ dotnet publish -c Release -r win-x64 --self-contained -p:PublishSingleFile=true
 GitHub Actions builds on every push. Check status:
 
 ```bash
-gh run list --repo shanselman/Moltbot-windows-tray --limit 1
+gh run list --repo shanselman/moltbot-windows-hub --limit 1
 ```
 
 ## Dependencies

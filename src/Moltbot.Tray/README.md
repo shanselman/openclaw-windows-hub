@@ -50,7 +50,7 @@ A Windows system tray companion for [Moltbot](https://github.com/Moltbot/Moltbot
 - On-demand health check button
 
 ### Keyboard Shortcuts
-- **Ctrl+Shift+Space** — Global hotkey to open Quick Send from anywhere
+- **Ctrl+Alt+Shift+C** — Global hotkey to open Quick Send from anywhere
 - **Enter** — Send message in Quick Send dialog
 - **Shift+Enter** — New line in Quick Send
 - **Esc** — Cancel Quick Send
@@ -73,13 +73,13 @@ A Windows system tray companion for [Moltbot](https://github.com/Moltbot/Moltbot
 ## Requirements
 
 - Windows 10 version 1903+ (for toast notifications)
-- .NET 9 Runtime (included in self-contained builds)
+- .NET 10 Runtime (included in self-contained builds)
 - [WebView2 Runtime](https://developer.microsoft.com/en-us/microsoft-edge/webview2/) (for chat panel)
 - Moltbot gateway running (typically in WSL2)
 
 ## Quick Start
 
-1. Download the latest release from [Releases](https://github.com/shanselman/Moltbot-windows-tray/releases)
+1. Download the latest release from [Releases](https://github.com/shanselman/moltbot-windows-hub/releases)
    - **x64**: For Intel/AMD processors
    - **arm64**: For Windows on ARM (e.g., Surface Pro X, Snapdragon laptops)
 2. Run `MoltbotTray.exe`
@@ -99,8 +99,8 @@ Moltbot config get gateway.auth.token
 ## Build from Source
 
 ```bash
-git clone https://github.com/shanselman/Moltbot-windows-tray.git
-cd Moltbot-windows-tray
+git clone https://github.com/shanselman/moltbot-windows-hub.git
+cd moltbot-windows-hub
 
 # Windows — auto-detects architecture
 build.bat
@@ -127,13 +127,13 @@ dotnet build -p:EnableWindowsTargeting=true -r win-x64
 ├── QuickSendDialog.cs            # Quick message input (Enter to send, TopMost)
 ├── StatusDetailForm.cs           # Rich status detail view (dark theme)
 ├── NotificationHistoryForm.cs    # Scrollable notification history
-├── GlobalHotkey.cs               # Ctrl+Shift+Space system-wide hotkey
+├── GlobalHotkey.cs               # Ctrl+Alt+Shift+C system-wide hotkey
 ├── DeepLinkHandler.cs            # Moltbot:// URI scheme handler
 ├── SettingsManager.cs            # JSON config with notification filters
 ├── SettingsDialog.cs             # Settings UI (connection, startup, notification filters)
 ├── AutoStartManager.cs           # Windows Registry auto-start
 ├── Logger.cs                     # File + debug logger with rotation
-└── MoltbotTray.csproj           # .NET 9, Windows Forms, WebView2
+└── MoltbotTray.csproj           # .NET 10, Windows Forms, WebView2
 ```
 
 ## macOS Parity Status
@@ -155,7 +155,7 @@ This Windows tray app aims for feature parity with the [Moltbot macOS menu bar a
 | Session awareness (main/sub) | ✅ | ✅ | Live session tracking |
 | Usage/token display | ✅ | ✅ | Input/output/total |
 | Deep link URI scheme | ✅ | ✅ | `Moltbot://` |
-| Global hotkey | — | ✅ | Ctrl+Shift+Space |
+| Global hotkey | — | ✅ | Ctrl+Alt+Shift+C |
 | Auto-start | ✅ | ✅ | Registry-based |
 | Quick send | ✅ | ✅ | Fire-and-forget to main session |
 | Health check (on-demand) | ✅ | ✅ | |
@@ -210,7 +210,7 @@ Settings are stored in `%APPDATA%\MoltbotTray\settings.json`:
 - Right-click tray → Open Log File
 
 **Global hotkey not working?**
-- Another app may have registered Ctrl+Shift+Space
+- Another app may have registered Ctrl+Alt+Shift+C
 - Check Settings → Global hotkey is enabled
 - Check the log file for "Failed to register global hotkey"
 
@@ -220,7 +220,7 @@ MIT
 
 ## Credits
 
-- Built with .NET 9, Windows Forms, and [WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)
+- Built with .NET 10, Windows Forms, and [WebView2](https://developer.microsoft.com/en-us/microsoft-edge/webview2/)
 - Toast notifications via [Microsoft.Toolkit.Uwp.Notifications](https://github.com/CommunityToolkit/WindowsCommunityToolkit)
 - Part of the [Moltbot](https://github.com/Moltbot/Moltbot) ecosystem
 
