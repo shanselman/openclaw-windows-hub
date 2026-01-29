@@ -1,6 +1,7 @@
 using MoltbotTray;
 using System;
 using System.Diagnostics;
+using System.IO.Pipes;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -10,6 +11,8 @@ namespace MoltbotTray;
 
 internal static class Program
 {
+    private const string PipeName = "MoltbotTray-DeepLink";
+    
     internal static readonly UpdatumManager AppUpdater = new("shanselman", "moltbot-windows-hub")
     {
         FetchOnlyLatestRelease = true,
@@ -23,9 +26,16 @@ internal static class Program
         using var mutex = new Mutex(true, "MoltbotTray", out bool createdNew);
         if (!createdNew)
         {
-            // TODO: Forward deep link args to running instance via named pipe
-            MessageBox.Show("Moltbot Tray is already running.", "Moltbot Tray",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            // Forward deep link args to running instance via named pipe
+            if (args.Length > 0 && args[0].StartsWith("moltbot://", StringComparison.OrdinalIgnoreCase))
+            {
+                SendDeepLinkToRunningInstance(args[0]);
+            }
+            else
+            {
+                MessageBox.Show("Moltbot Tray is already running.", "Moltbot Tray",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
             return;
         }
 
@@ -144,6 +154,52 @@ internal static class Program
         {
             progressDialog?.Close();
         }
+    }
+
+    private static void SendDeepLinkToRunningInstance(string uri)
+    {
+        try
+        {
+            using var pipe = new NamedPipeClientStream(".", PipeName, PipeDirection.Out);
+            pipe.Connect(1000); // 1 second timeout
+            using var writer = new System.IO.StreamWriter(pipe);
+            writer.WriteLine(uri);
+            writer.Flush();
+            Logger.Info($"Forwarded deep link to running instance: {uri}");
+        }
+        catch (Exception ex)
+        {
+            Logger.Warn($"Failed to forward deep link: {ex.Message}");
+            MessageBox.Show($"Moltbot Tray is running but couldn't process the deep link.\n\nPlease try again.",
+                "Deep Link Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+    }
+
+    internal static void StartDeepLinkServer(Action<string> onDeepLinkReceived)
+    {
+        Task.Run(async () =>
+        {
+            while (true)
+            {
+                try
+                {
+                    using var pipe = new NamedPipeServerStream(PipeName, PipeDirection.In);
+                    await pipe.WaitForConnectionAsync();
+                    using var reader = new System.IO.StreamReader(pipe);
+                    var uri = await reader.ReadLineAsync();
+                    if (!string.IsNullOrEmpty(uri))
+                    {
+                        Logger.Info($"Received deep link via IPC: {uri}");
+                        onDeepLinkReceived(uri);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Warn($"Deep link server error: {ex.Message}");
+                    await Task.Delay(1000);
+                }
+            }
+        });
     }
 }
 

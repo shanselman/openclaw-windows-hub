@@ -73,9 +73,14 @@ public static class DeepLinkHandler
 
     /// <summary>
     /// Processes a moltbot:// deep link.
-    /// Supports: moltbot://agent?message=...&sessionKey=...&channel=...
+    /// Supports:
+    ///   moltbot://agent?message=...
+    ///   moltbot://send?message=...  (opens Quick Send with pre-filled text)
+    ///   moltbot://dashboard
+    ///   moltbot://chat
+    ///   moltbot://settings
     /// </summary>
-    public static async Task ProcessDeepLinkAsync(Uri uri, MoltbotGatewayClient client)
+    public static async Task ProcessDeepLinkAsync(Uri uri, MoltbotGatewayClient client, Action<string>? openDashboard = null, Action? openChat = null, Action? openSettings = null, Action<string>? openQuickSend = null)
     {
         Logger.Info($"Processing deep link: {uri}");
 
@@ -86,6 +91,19 @@ public static class DeepLinkHandler
         {
             case "agent":
                 await HandleAgentDeepLinkAsync(query, client);
+                break;
+            case "send":
+                var msg = query["message"] ?? "";
+                openQuickSend?.Invoke(msg);
+                break;
+            case "dashboard":
+                openDashboard?.Invoke(uri.AbsolutePath.TrimStart('/'));
+                break;
+            case "chat":
+                openChat?.Invoke();
+                break;
+            case "settings":
+                openSettings?.Invoke();
                 break;
             default:
                 Logger.Warn($"Unknown deep link host: {host}");
@@ -126,10 +144,30 @@ public static class DeepLinkHandler
         {
             await client.SendChatMessageAsync(message);
             Logger.Info($"Deep link: sent message ({message.Length} chars)");
+            
+            // Show confirmation toast
+            try
+            {
+                new Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder()
+                    .AddText("🦞 Message Sent")
+                    .AddText(message.Length > 50 ? message[..50] + "…" : message)
+                    .Show();
+            }
+            catch { }
         }
         catch (Exception ex)
         {
             Logger.Error("Deep link: failed to send", ex);
+            
+            // Show error toast
+            try
+            {
+                new Microsoft.Toolkit.Uwp.Notifications.ToastContentBuilder()
+                    .AddText("❌ Failed to Send")
+                    .AddText(ex.Message)
+                    .Show();
+            }
+            catch { }
         }
     }
 }

@@ -86,6 +86,12 @@ public partial class QuickSendDialog : ModernForm
         Close();
     }
 
+    public void SetMessage(string message)
+    {
+        _messageTextBox.Text = message;
+        _messageTextBox.SelectionStart = message.Length;
+    }
+
     protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
     {
         if (keyData == (Keys.Control | Keys.Enter) || keyData == Keys.Enter)

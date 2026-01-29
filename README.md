@@ -71,7 +71,22 @@ Modern Windows 11-style system tray companion that connects to your local Moltbo
 | Channel control | ✅ | ✅ |
 | Modern UI styling | ✅ | ✅ |
 | Dark/Light mode | ✅ | ✅ |
-| Deep links | ✅ | 🔄 |
+| Deep links | ✅ | ✅ |
+
+### Deep Links
+
+Moltbot registers the `moltbot://` URL scheme for automation and integration:
+
+| Link | Description |
+|------|-------------|
+| `moltbot://settings` | Open Settings dialog |
+| `moltbot://chat` | Open Web Chat window |
+| `moltbot://dashboard` | Open Dashboard in browser |
+| `moltbot://dashboard/sessions` | Open specific dashboard page |
+| `moltbot://send?message=Hello` | Open Quick Send with pre-filled text |
+| `moltbot://agent?message=Hello` | Send message directly (with confirmation) |
+
+Deep links work even when Molty is already running - they're forwarded via IPC.
 
 ## 📦 Moltbot.CommandPalette
 

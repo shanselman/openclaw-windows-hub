@@ -410,13 +410,54 @@ public class TrayApplication : ApplicationContext
             // Process deep link if launched via URI
             if (DeepLinkHandler.TryGetDeepLink(_startupArgs, out var uri) && uri != null)
             {
-                await DeepLinkHandler.ProcessDeepLinkAsync(uri, _gatewayClient);
+                await ProcessDeepLinkInternalAsync(uri);
             }
+
+            // Start IPC server for deep links from other instances
+            Program.StartDeepLinkServer(OnDeepLinkReceivedViaIpc);
         }
         catch (Exception ex)
         {
             Logger.Error("Initial connection failed", ex);
             ShowErrorToast("Connection Failed", $"Failed to connect: {ex.Message}");
+        }
+    }
+
+    private void OnDeepLinkReceivedViaIpc(string uriString)
+    {
+        if (Uri.TryCreate(uriString, UriKind.Absolute, out var uri))
+        {
+            _syncContext?.Post(async _ =>
+            {
+                await ProcessDeepLinkInternalAsync(uri);
+            }, null);
+        }
+    }
+
+    private async Task ProcessDeepLinkInternalAsync(Uri uri)
+    {
+        if (_gatewayClient == null) return;
+        
+        await DeepLinkHandler.ProcessDeepLinkAsync(
+            uri, 
+            _gatewayClient,
+            openDashboard: path => OpenDashboardPath("/" + path.TrimStart('/')),
+            openChat: () => _syncContext?.Post(_ => OnOpenWebUI(null, EventArgs.Empty), null),
+            openSettings: () => _syncContext?.Post(_ => OnSettings(null, EventArgs.Empty), null),
+            openQuickSend: msg => _syncContext?.Post(_ => ShowQuickSendWithMessage(msg), null)
+        );
+    }
+
+    private void ShowQuickSendWithMessage(string? prefill)
+    {
+        using var dialog = new QuickSendDialog();
+        if (!string.IsNullOrEmpty(prefill))
+        {
+            dialog.SetMessage(prefill);
+        }
+        if (dialog.ShowDialog() == DialogResult.OK && !string.IsNullOrWhiteSpace(dialog.Message))
+        {
+            _ = _gatewayClient?.SendChatMessageAsync(dialog.Message);
         }
     }
 
