@@ -58,25 +58,37 @@ Modern Windows 11-style system tray companion that connects to your local Moltbo
 
 ### Mac Parity Status
 
+Comparing against [moltbot-menubar](https://github.com/magimetal/moltbot-menubar) (macOS Swift menu bar app):
+
 | Feature | Mac | Windows | Notes |
 |---------|-----|---------|-------|
-| System tray icon | ✅ | ✅ | |
-| Connection status | ✅ | ✅ | |
-| Quick send hotkey | ✅ | ✅ | |
-| Web chat window | ✅ | ✅ | |
-| Toast notifications | ✅ | ✅ | |
-| Auto-start | ✅ | ✅ | |
-| Session display | ✅ | ✅ | |
-| Channel health | ✅ | ✅ | |
-| Channel control | ✅ | ✅ | |
-| Modern UI styling | ✅ | ✅ | |
-| Dark/Light mode | ✅ | ✅ | |
-| Deep links (moltbot://) | ✅ | ✅ | Fully tested with IPC forwarding |
-| Menu bar icon variants | ✅ | ⚠️ | Mac has template icons; Windows uses pixel art |
-| Native share sheet | ✅ | ❌ | Mac-specific feature |
-| Spotlight integration | ✅ | ✅ | PowerToys Command Palette covers this |
-| Keyboard navigation in menu | ✅ | ❌ | Modern menu doesn't support arrow keys yet |
-| Activity indicator animation | ✅ | ⚠️ | Windows has badge dot, no animation |
+| Menu bar/tray icon | ✅ | ✅ | Color-coded status |
+| Gateway status display | ✅ | ✅ | Connected/Disconnected |
+| PID display | ✅ | ❌ | Mac shows gateway PID |
+| Channel status | ✅ | ✅ | Mac: Discord / Win: Telegram+WhatsApp |
+| Sessions count | ✅ | ✅ | |
+| Last check timestamp | ✅ | ❌ | |
+| Gateway start/stop/restart | ✅ | ❌ | Mac controls gateway process |
+| View Logs | ✅ | ✅ | |
+| Open Web UI | ✅ | ✅ | |
+| Refresh | ✅ | ✅ | Auto-refresh on menu open |
+| Launch at Login | ✅ | ✅ | |
+| Notifications toggle | ✅ | ✅ | |
+
+### Windows-Only Features
+
+These features are available in Windows but not in the Mac app:
+
+| Feature | Description |
+|---------|-------------|
+| Quick Send hotkey | Ctrl+Alt+Shift+C global hotkey |
+| Embedded Web Chat | WebView2-based chat window |
+| Toast notifications | Clickable Windows notifications |
+| Channel control | Start/stop Telegram & WhatsApp |
+| Modern flyout menu | Windows 11-style with dark/light mode |
+| Deep links | `moltbot://` URL scheme with IPC |
+| First-run welcome | Guided onboarding for new users |
+| PowerToys integration | Command Palette extension |
 
 ### Deep Links
 
