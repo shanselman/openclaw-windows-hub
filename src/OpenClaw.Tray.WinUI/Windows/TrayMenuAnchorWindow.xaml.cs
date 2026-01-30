@@ -7,7 +7,17 @@ namespace OpenClawTray.Windows;
 
 /// <summary>
 /// A minimal, invisible window used as an anchor point for displaying MenuFlyout from tray icon.
-/// This solves the WinUI 3 limitation where MenuFlyout requires a valid UIElement anchor.
+/// 
+/// BACKGROUND:
+/// WinUI 3's MenuFlyout.ShowAt() requires a valid UIElement with proper visual tree context.
+/// TrayIcon doesn't provide this context, causing crashes in Microsoft.UI.Windowing.Core.dll.
+/// 
+/// SOLUTION:
+/// This 1x1 pixel window is positioned at the cursor and provides the required anchor.
+/// It's created once and reused to avoid creation/destruction overhead.
+/// A strong reference is maintained in App to prevent garbage collection.
+/// 
+/// See TRAY_MENU_CRASH_FIX.md for detailed documentation.
 /// </summary>
 public sealed partial class TrayMenuAnchorWindow : Window
 {

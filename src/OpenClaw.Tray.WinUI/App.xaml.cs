@@ -210,6 +210,15 @@ public partial class App : Application
         public int Y;
     }
 
+    /// <summary>
+    /// Shows the tray menu using an invisible anchor window to prevent crashes.
+    /// 
+    /// WinUI 3 MenuFlyout requires a valid UIElement anchor. TrayIcon doesn't provide
+    /// proper context, causing crashes. This method uses a tiny invisible window positioned
+    /// at the cursor as the anchor point.
+    /// 
+    /// See TRAY_MENU_CRASH_FIX.md for detailed explanation.
+    /// </summary>
     private void ShowTrayMenuFlyoutWithAnchor()
     {
         try
