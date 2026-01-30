@@ -71,7 +71,7 @@ public sealed partial class TrayMenuWindow : WindowEx
         this.IsTitleBarVisible = false;
         this.IsAlwaysOnTop = true;
         
-        // Lose focus = hide (not close - reuse window to avoid native crashes after idle)
+        // Lose focus = close
         Activated += OnActivated;
     }
 
@@ -79,8 +79,7 @@ public sealed partial class TrayMenuWindow : WindowEx
     {
         if (args.WindowActivationState == WindowActivationState.Deactivated)
         {
-            // Hide instead of close to allow window reuse
-            this.Hide();
+            Close();
         }
     }
 

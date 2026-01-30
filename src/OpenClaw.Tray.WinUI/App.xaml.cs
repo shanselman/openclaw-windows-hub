@@ -187,34 +187,126 @@ public partial class App : Application
 
     private void OnTrayIconSelected(TrayIcon sender, TrayIconEventArgs e)
     {
-        // Left-click: show menu (same as right-click, matching WinForms behavior)
-        // Ensure we're on the UI thread - after idle, callback context may be wrong
-        if (_dispatcherQueue?.HasThreadAccess == true)
-        {
-            ShowTrayMenuPopup();
-        }
-        else
-        {
-            _dispatcherQueue?.TryEnqueue(() => ShowTrayMenuPopup());
-        }
+        // Left-click: show flyout menu (avoids window creation crash)
+        e.Flyout = BuildTrayMenuFlyout();
     }
 
     private void OnTrayContextMenu(TrayIcon sender, TrayIconEventArgs e)
     {
-        // Right-click: show menu via popup window for better multi-monitor support
-        // Ensure we're on the UI thread
-        if (_dispatcherQueue?.HasThreadAccess == true)
-        {
-            ShowTrayMenuPopup();
-        }
-        else
-        {
-            _dispatcherQueue?.TryEnqueue(() => ShowTrayMenuPopup());
-        }
-        // Don't set e.Flyout - we're handling it ourselves
+        // Right-click: show flyout menu
+        e.Flyout = BuildTrayMenuFlyout();
     }
 
-    private void ShowTrayMenuPopup()
+    private MenuFlyout BuildTrayMenuFlyout()
+    {
+        // Pre-fetch data (fire and forget - flyout will show with cached data)
+        if (_gatewayClient != null && _currentStatus == ConnectionStatus.Connected)
+        {
+            try
+            {
+                _ = _gatewayClient.CheckHealthAsync();
+                _ = _gatewayClient.RequestSessionsAsync();
+                _ = _gatewayClient.RequestUsageAsync();
+            }
+            catch { /* ignore */ }
+        }
+
+        var flyout = new MenuFlyout();
+        
+        // Brand header
+        var header = new MenuFlyoutItem { Text = "🦞 Molty", IsEnabled = false };
+        header.FontWeight = Microsoft.UI.Text.FontWeights.Bold;
+        flyout.Items.Add(header);
+        flyout.Items.Add(new MenuFlyoutSeparator());
+
+        // Status
+        var statusIcon = _currentStatus switch
+        {
+            ConnectionStatus.Connected => "✅",
+            ConnectionStatus.Connecting => "🔄",
+            ConnectionStatus.Error => "❌",
+            _ => "⚪"
+        };
+        var statusItem = new MenuFlyoutItem { Text = $"{statusIcon} Status: {_currentStatus}" };
+        statusItem.Click += (s, e) => ShowStatusDetail();
+        flyout.Items.Add(statusItem);
+
+        // Activity (if any)
+        if (_currentActivity != null && _currentActivity.Kind != OpenClaw.Shared.ActivityKind.Idle)
+        {
+            flyout.Items.Add(new MenuFlyoutItem 
+            { 
+                Text = $"{_currentActivity.Glyph} {_currentActivity.DisplayText}", 
+                IsEnabled = false 
+            });
+        }
+
+        // Usage
+        if (_lastUsage != null)
+        {
+            flyout.Items.Add(new MenuFlyoutItem 
+            { 
+                Text = $"📊 {_lastUsage.DisplayText}", 
+                IsEnabled = false 
+            });
+        }
+
+        flyout.Items.Add(new MenuFlyoutSeparator());
+
+        // Sessions
+        if (_lastSessions.Length > 0)
+        {
+            var sessionsMenu = new MenuFlyoutSubItem { Text = $"📋 Sessions ({_lastSessions.Length})" };
+            foreach (var session in _lastSessions.Take(5))
+            {
+                var sessionItem = new MenuFlyoutItem { Text = session.DisplayName ?? session.Id };
+                var sessionId = session.Id;
+                sessionItem.Click += (s, e) => OpenDashboard($"sessions/{sessionId}");
+                sessionsMenu.Items.Add(sessionItem);
+            }
+            flyout.Items.Add(sessionsMenu);
+        }
+
+        // Quick actions
+        var dashboardItem = new MenuFlyoutItem { Text = "🌐 Open Dashboard" };
+        dashboardItem.Click += (s, e) => OpenDashboard();
+        flyout.Items.Add(dashboardItem);
+
+        var chatItem = new MenuFlyoutItem { Text = "💬 Web Chat" };
+        chatItem.Click += (s, e) => ShowWebChat();
+        flyout.Items.Add(chatItem);
+
+        var quickSendItem = new MenuFlyoutItem { Text = "✉️ Quick Send" };
+        quickSendItem.Click += (s, e) => ShowQuickSend();
+        flyout.Items.Add(quickSendItem);
+
+        var historyItem = new MenuFlyoutItem { Text = "📜 Notification History" };
+        historyItem.Click += (s, e) => ShowNotificationHistory();
+        flyout.Items.Add(historyItem);
+
+        flyout.Items.Add(new MenuFlyoutSeparator());
+
+        // Settings & Exit
+        var settingsItem = new MenuFlyoutItem { Text = "⚙️ Settings" };
+        settingsItem.Click += (s, e) => ShowSettings();
+        flyout.Items.Add(settingsItem);
+
+        var logItem = new MenuFlyoutItem { Text = "📄 View Log" };
+        logItem.Click += (s, e) => OpenLogFile();
+        flyout.Items.Add(logItem);
+
+        flyout.Items.Add(new MenuFlyoutSeparator());
+
+        var exitItem = new MenuFlyoutItem { Text = "❌ Exit" };
+        exitItem.Click += (s, e) => ExitApplication();
+        flyout.Items.Add(exitItem);
+
+        return flyout;
+    }
+
+    // Keep old method for backwards compat but mark unused
+    [System.Obsolete("Use BuildTrayMenuFlyout instead - window-based menu causes crashes")]
+    private async void ShowTrayMenuPopup()
     {
         try
         {
@@ -225,31 +317,40 @@ public partial class App : Application
                 return;
             }
 
-            // Pre-fetch latest data before showing menu (fire and forget, don't wait)
+            // Pre-fetch latest data before showing menu
             if (_gatewayClient != null && _currentStatus == ConnectionStatus.Connected)
             {
                 try
                 {
-                    _ = _gatewayClient.CheckHealthAsync();
-                    _ = _gatewayClient.RequestSessionsAsync();
-                    _ = _gatewayClient.RequestUsageAsync();
+                    // Request data updates - these will update _lastSessions, _lastChannels, etc.
+                    var healthTask = _gatewayClient.CheckHealthAsync();
+                    var sessionsTask = _gatewayClient.RequestSessionsAsync();
+                    var usageTask = _gatewayClient.RequestUsageAsync();
+                    
+                    // Wait briefly for data to arrive (don't block forever)
+                    await Task.WhenAny(
+                        Task.WhenAll(healthTask, sessionsTask, usageTask),
+                        Task.Delay(150) // 150ms max wait
+                    );
                 }
-                catch { /* ignore */ }
+                catch { /* ignore fetch errors */ }
             }
 
-            // Reuse existing window if possible, otherwise create new one
-            // Creating windows after idle may cause native WinUI crashes
-            if (_trayMenuWindow == null)
+            // Always create a fresh window - reuse causes visual glitches
+            // Close existing window first if any
+            if (_trayMenuWindow != null)
             {
-                _trayMenuWindow = new TrayMenuWindow();
-                _trayMenuWindow.MenuItemClicked += OnTrayMenuItemClicked;
-                _trayMenuWindow.Closed += (s, e) => _trayMenuWindow = null;
+                try 
+                { 
+                    _trayMenuWindow.Close(); 
+                }
+                catch { /* ignore close errors */ }
+                _trayMenuWindow = null;
             }
-            else
-            {
-                // Clear and rebuild menu items
-                _trayMenuWindow.ClearItems();
-            }
+
+            _trayMenuWindow = new TrayMenuWindow();
+            _trayMenuWindow.MenuItemClicked += OnTrayMenuItemClicked;
+            _trayMenuWindow.Closed += (s, e) => _trayMenuWindow = null;
 
             BuildTrayMenuPopup(_trayMenuWindow);
             _trayMenuWindow.SizeToContent();
@@ -259,8 +360,6 @@ public partial class App : Application
         {
             LogCrash("ShowTrayMenuPopup", ex);
             Logger.Error($"Failed to show tray menu: {ex.Message}");
-            
-            // If window creation failed, null it out so we try fresh next time
             _trayMenuWindow = null;
         }
     }
