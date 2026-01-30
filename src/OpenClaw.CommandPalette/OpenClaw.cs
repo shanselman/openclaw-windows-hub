@@ -7,16 +7,16 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using Microsoft.CommandPalette.Extensions;
 
-namespace Moltbot;
+namespace OpenClaw;
 
 [Guid("b71e1e6d-20f4-4fd8-9d8e-cc5dc94ca8b5")]
-public sealed partial class Moltbot : IExtension, IDisposable
+public sealed partial class OpenClaw : IExtension, IDisposable
 {
     private readonly ManualResetEvent _extensionDisposedEvent;
 
     private readonly OpenClawCommandsProvider _provider = new();
 
-    public Moltbot(ManualResetEvent extensionDisposedEvent)
+    public OpenClaw(ManualResetEvent extensionDisposedEvent)
     {
         this._extensionDisposedEvent = extensionDisposedEvent;
     }

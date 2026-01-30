@@ -145,7 +145,7 @@ public sealed partial class SettingsWindow : WindowEx
         {
             new ToastContentBuilder()
                 .AddText("Test Notification")
-                .AddText("This is a test notification from Moltbot Tray.")
+                .AddText("This is a test notification from OpenClaw Tray.")
                 .Show();
         }
         catch (Exception ex)

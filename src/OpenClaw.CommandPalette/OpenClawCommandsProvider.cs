@@ -5,7 +5,7 @@
 using Microsoft.CommandPalette.Extensions;
 using Microsoft.CommandPalette.Extensions.Toolkit;
 
-namespace Moltbot;
+namespace OpenClaw;
 
 public partial class OpenClawCommandsProvider : CommandProvider
 {
@@ -13,10 +13,10 @@ public partial class OpenClawCommandsProvider : CommandProvider
 
     public OpenClawCommandsProvider()
     {
-        DisplayName = "Moltbot";
+        DisplayName = "OpenClaw";
         Icon = IconHelpers.FromRelativePath("Assets\\StoreLogo.png");
         _commands = [
-            new CommandItem(new MoltbotPage()) { Title = DisplayName },
+            new CommandItem(new OpenClawPage()) { Title = DisplayName },
         ];
     }
 

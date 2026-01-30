@@ -5,14 +5,14 @@
 using Microsoft.CommandPalette.Extensions;
 using Microsoft.CommandPalette.Extensions.Toolkit;
 
-namespace Moltbot;
+namespace OpenClaw;
 
 internal sealed partial class OpenClawPage : ListPage
 {
     public OpenClawPage()
     {
         Icon = IconHelpers.FromRelativePath("Assets\\StoreLogo.png");
-        Title = "Moltbot";
+        Title = "OpenClaw";
         Name = "Open";
     }
 
@@ -22,22 +22,22 @@ internal sealed partial class OpenClawPage : ListPage
             new ListItem(new OpenUrlCommand("http://localhost:18789"))
             {
                 Title = "🦞 Open Dashboard",
-                Subtitle = "Open Moltbot web dashboard"
+                Subtitle = "Open OpenClaw web dashboard"
             },
             new ListItem(new OpenUrlCommand("openclaw://chat"))
             {
                 Title = "💬 Web Chat",
-                Subtitle = "Open the Moltbot chat window"
+                Subtitle = "Open the OpenClaw chat window"
             },
             new ListItem(new OpenUrlCommand("openclaw://send"))
             {
                 Title = "📝 Quick Send", 
-                Subtitle = "Send a message to Moltbot"
+                Subtitle = "Send a message to OpenClaw"
             },
             new ListItem(new OpenUrlCommand("openclaw://settings"))
             {
                 Title = "⚙️ Settings",
-                Subtitle = "Configure Moltbot Tray"
+                Subtitle = "Configure OpenClaw Tray"
             }
         ];
     }
