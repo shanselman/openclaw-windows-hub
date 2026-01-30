@@ -225,13 +225,6 @@ public partial class App : Application
                 return;
             }
 
-            // Close any existing menu
-            if (_trayMenuWindow != null)
-            {
-                try { _trayMenuWindow.Close(); } catch { }
-                _trayMenuWindow = null;
-            }
-
             // Pre-fetch latest data before showing menu (fire and forget, don't wait)
             if (_gatewayClient != null && _currentStatus == ConnectionStatus.Connected)
             {
@@ -244,9 +237,19 @@ public partial class App : Application
                 catch { /* ignore */ }
             }
 
-            _trayMenuWindow = new TrayMenuWindow();
-            _trayMenuWindow.MenuItemClicked += OnTrayMenuItemClicked;
-            _trayMenuWindow.Closed += (s, e) => _trayMenuWindow = null;
+            // Reuse existing window if possible, otherwise create new one
+            // Creating windows after idle may cause native WinUI crashes
+            if (_trayMenuWindow == null)
+            {
+                _trayMenuWindow = new TrayMenuWindow();
+                _trayMenuWindow.MenuItemClicked += OnTrayMenuItemClicked;
+                _trayMenuWindow.Closed += (s, e) => _trayMenuWindow = null;
+            }
+            else
+            {
+                // Clear and rebuild menu items
+                _trayMenuWindow.ClearItems();
+            }
 
             BuildTrayMenuPopup(_trayMenuWindow);
             _trayMenuWindow.SizeToContent();
@@ -256,6 +259,9 @@ public partial class App : Application
         {
             LogCrash("ShowTrayMenuPopup", ex);
             Logger.Error($"Failed to show tray menu: {ex.Message}");
+            
+            // If window creation failed, null it out so we try fresh next time
+            _trayMenuWindow = null;
         }
     }
 
