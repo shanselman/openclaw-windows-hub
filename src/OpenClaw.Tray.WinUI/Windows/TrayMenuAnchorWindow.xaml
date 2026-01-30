@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="OpenClawTray.Windows.TrayMenuAnchorWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    
+    <!-- Invisible 1x1 window that serves as an anchor for tray menu flyouts -->
+    <Grid x:Name="RootGrid" Background="Transparent" />
+</Window>

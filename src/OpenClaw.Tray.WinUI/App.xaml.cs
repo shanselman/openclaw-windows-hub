@@ -13,6 +13,7 @@ using System.Drawing;
 using System.IO;
 using System.IO.Pipes;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Updatum;
@@ -59,6 +60,7 @@ public partial class App : Application
     private StatusDetailWindow? _statusDetailWindow;
     private NotificationHistoryWindow? _notificationHistoryWindow;
     private TrayMenuWindow? _trayMenuWindow;
+    private TrayMenuAnchorWindow? _trayMenuAnchor; // Keep-alive anchor for MenuFlyout
 
     private string[]? _startupArgs;
     private static readonly string CrashLogPath = Path.Combine(
@@ -187,14 +189,58 @@ public partial class App : Application
 
     private void OnTrayIconSelected(TrayIcon sender, TrayIconEventArgs e)
     {
-        // Left-click: show flyout menu (avoids window creation crash)
-        e.Flyout = BuildTrayMenuFlyout();
+        // Left-click: show flyout menu using anchor window to prevent crash
+        ShowTrayMenuFlyoutWithAnchor();
     }
 
     private void OnTrayContextMenu(TrayIcon sender, TrayIconEventArgs e)
     {
-        // Right-click: show flyout menu
-        e.Flyout = BuildTrayMenuFlyout();
+        // Right-click: show flyout menu using anchor window to prevent crash
+        ShowTrayMenuFlyoutWithAnchor();
+    }
+
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    private static extern bool GetCursorPos(out POINT lpPoint);
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct POINT
+    {
+        public int X;
+        public int Y;
+    }
+
+    private void ShowTrayMenuFlyoutWithAnchor()
+    {
+        try
+        {
+            // Ensure anchor window exists (created once, reused)
+            if (_trayMenuAnchor == null)
+            {
+                _trayMenuAnchor = new TrayMenuAnchorWindow();
+            }
+
+            // Get cursor position for positioning the anchor window
+            if (GetCursorPos(out POINT cursorPos))
+            {
+                // Position the tiny anchor window at cursor location
+                _trayMenuAnchor.PositionAtCursor(cursorPos.X, cursorPos.Y);
+            }
+            else
+            {
+                // Fallback: position offscreen if we can't get cursor
+                _trayMenuAnchor.PositionOffscreen();
+            }
+
+            // Build and show the flyout anchored to the window
+            var flyout = BuildTrayMenuFlyout();
+            _trayMenuAnchor.ShowFlyout(flyout);
+        }
+        catch (Exception ex)
+        {
+            LogCrash("ShowTrayMenuFlyoutWithAnchor", ex);
+            Logger.Error($"Failed to show tray menu: {ex.Message}");
+        }
     }
 
     private MenuFlyout BuildTrayMenuFlyout()
