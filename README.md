@@ -21,8 +21,10 @@ This monorepo contains three projects:
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Windows 10/11
+- Windows 10 (20H2+) or Windows 11
 - .NET 10.0 SDK (preview) - https://dotnet.microsoft.com/download/dotnet/10.0
+- Windows 10 SDK (for WinUI build) - install via Visual Studio or standalone
+- WebView2 Runtime - pre-installed on modern Windows, or get from https://developer.microsoft.com/microsoft-edge/webview2
 - PowerToys (optional, for Command Palette extension)
 
 ### Build

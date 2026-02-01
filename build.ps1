@@ -96,9 +96,28 @@ if (Test-Path $windowsSdkPath) {
     $sdkVersions = Get-ChildItem $windowsSdkPath -Directory | Select-Object -ExpandProperty Name | Sort-Object -Descending
     Write-Success "Windows SDK: $($sdkVersions[0])"
 } else {
-    Write-Warning "Windows 10 SDK not found (may be needed for WinUI)"
+    Write-Warning "Windows 10 SDK not found (needed for WinUI build)"
     Write-Info "Install via Visual Studio Installer or standalone SDK"
     $issues += "Windows 10 SDK not detected"
+}
+
+# Check WebView2 Runtime (for WinUI chat window)
+$webView2Key = "HKLM:\SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
+$webView2KeyAlt = "HKCU:\SOFTWARE\Microsoft\EdgeUpdate\Clients\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}"
+$webView2Version = $null
+
+if (Test-Path $webView2Key) {
+    $webView2Version = (Get-ItemProperty $webView2Key -ErrorAction SilentlyContinue).pv
+} elseif (Test-Path $webView2KeyAlt) {
+    $webView2Version = (Get-ItemProperty $webView2KeyAlt -ErrorAction SilentlyContinue).pv
+}
+
+if ($webView2Version) {
+    Write-Success "WebView2 Runtime: $webView2Version"
+} else {
+    Write-Warning "WebView2 Runtime not detected (needed for WinUI chat window)"
+    Write-Info "Usually pre-installed on Windows 10/11. Get from: https://developer.microsoft.com/microsoft-edge/webview2"
+    # Not a hard failure - app will fall back to browser
 }
 
 # Check architecture
