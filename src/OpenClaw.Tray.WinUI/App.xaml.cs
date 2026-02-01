@@ -304,7 +304,9 @@ public partial class App : Application
             case "log": OpenLogFile(); break;
             case "exit": ExitApplication(); break;
             default:
-                if (action.StartsWith("session:"))
+                if (action.StartsWith("dashboard:"))
+                    OpenDashboard(action["dashboard:".Length..]);
+                else if (action.StartsWith("session:"))
                     OpenDashboard($"sessions/{action[8..]}");
                 else if (action.StartsWith("channel:"))
                     ToggleChannel(action[8..]);
