@@ -91,6 +91,23 @@ public sealed partial class WebChatWindow : WindowEx
                 Logger.Info($"WebChatWindow: Navigation completed, success={e.IsSuccess}, status={e.WebErrorStatus}");
                 LoadingRing.IsActive = false;
                 LoadingRing.Visibility = Visibility.Collapsed;
+                
+                // Show friendly error if connection failed
+                if (!e.IsSuccess && (e.WebErrorStatus == CoreWebView2WebErrorStatus.ConnectionAborted ||
+                                      e.WebErrorStatus == CoreWebView2WebErrorStatus.CannotConnect ||
+                                      e.WebErrorStatus == CoreWebView2WebErrorStatus.ConnectionReset ||
+                                      e.WebErrorStatus == CoreWebView2WebErrorStatus.ServerUnreachable))
+                {
+                    Logger.Info("WebChatWindow: Gateway unreachable, showing friendly error");
+                    WebView.Visibility = Visibility.Collapsed;
+                    ErrorPanel.Visibility = Visibility.Visible;
+                    ErrorText.Text = "Can't reach OpenClaw Gateway\n\n" +
+                        $"The gateway at {_gatewayUrl} is not responding.\n\n" +
+                        "To connect:\n" +
+                        "• Make sure your OpenClaw gateway is running\n" +
+                        "• If remote, connect via VPN to your home network\n" +
+                        "• Or use SSH tunnel: ssh -N -L 18789:localhost:18789 your-server";
+                }
             };
             WebView.CoreWebView2.NavigationCompleted += _navigationCompletedHandler;
 
