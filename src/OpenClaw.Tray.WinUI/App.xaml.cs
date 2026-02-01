@@ -226,113 +226,6 @@ public partial class App : Application
         ShowTrayMenuPopup();
     }
 
-    private MenuFlyout BuildTrayMenuFlyout()
-    {
-        // Pre-fetch data (fire and forget - flyout will show with cached data)
-        if (_gatewayClient != null && _currentStatus == ConnectionStatus.Connected)
-        {
-            try
-            {
-                _ = _gatewayClient.CheckHealthAsync();
-                _ = _gatewayClient.RequestSessionsAsync();
-                _ = _gatewayClient.RequestUsageAsync();
-            }
-            catch { /* ignore */ }
-        }
-
-        var flyout = new MenuFlyout();
-        
-        // Brand header
-        var header = new MenuFlyoutItem { Text = "🦞 Molty", IsEnabled = false };
-        header.FontWeight = Microsoft.UI.Text.FontWeights.Bold;
-        flyout.Items.Add(header);
-        flyout.Items.Add(new MenuFlyoutSeparator());
-
-        // Status
-        var statusIcon = _currentStatus switch
-        {
-            ConnectionStatus.Connected => "✅",
-            ConnectionStatus.Connecting => "🔄",
-            ConnectionStatus.Error => "❌",
-            _ => "⚪"
-        };
-        var statusItem = new MenuFlyoutItem { Text = $"{statusIcon} Status: {_currentStatus}" };
-        statusItem.Click += (s, e) => ShowStatusDetail();
-        flyout.Items.Add(statusItem);
-
-        // Activity (if any)
-        if (_currentActivity != null && _currentActivity.Kind != OpenClaw.Shared.ActivityKind.Idle)
-        {
-            flyout.Items.Add(new MenuFlyoutItem 
-            { 
-                Text = $"{_currentActivity.Glyph} {_currentActivity.DisplayText}", 
-                IsEnabled = false 
-            });
-        }
-
-        // Usage
-        if (_lastUsage != null)
-        {
-            flyout.Items.Add(new MenuFlyoutItem 
-            { 
-                Text = $"📊 {_lastUsage.DisplayText}", 
-                IsEnabled = false 
-            });
-        }
-
-        flyout.Items.Add(new MenuFlyoutSeparator());
-
-        // Sessions
-        if (_lastSessions.Length > 0)
-        {
-            var sessionsMenu = new MenuFlyoutSubItem { Text = $"📋 Sessions ({_lastSessions.Length})" };
-            foreach (var session in _lastSessions.Take(5))
-            {
-                var sessionItem = new MenuFlyoutItem { Text = session.DisplayText };
-                var sessionKey = session.Key;
-                sessionItem.Click += (s, e) => OpenDashboard($"sessions/{sessionKey}");
-                sessionsMenu.Items.Add(sessionItem);
-            }
-            flyout.Items.Add(sessionsMenu);
-        }
-
-        // Quick actions
-        var dashboardItem = new MenuFlyoutItem { Text = "🌐 Open Dashboard" };
-        dashboardItem.Click += (s, e) => OpenDashboard();
-        flyout.Items.Add(dashboardItem);
-
-        var chatItem = new MenuFlyoutItem { Text = "💬 Web Chat" };
-        chatItem.Click += (s, e) => ShowWebChat();
-        flyout.Items.Add(chatItem);
-
-        var quickSendItem = new MenuFlyoutItem { Text = "✉️ Quick Send" };
-        quickSendItem.Click += (s, e) => ShowQuickSend();
-        flyout.Items.Add(quickSendItem);
-
-        var historyItem = new MenuFlyoutItem { Text = "📜 Notification History" };
-        historyItem.Click += (s, e) => ShowNotificationHistory();
-        flyout.Items.Add(historyItem);
-
-        flyout.Items.Add(new MenuFlyoutSeparator());
-
-        // Settings & Exit
-        var settingsItem = new MenuFlyoutItem { Text = "⚙️ Settings" };
-        settingsItem.Click += (s, e) => ShowSettings();
-        flyout.Items.Add(settingsItem);
-
-        var logItem = new MenuFlyoutItem { Text = "📄 View Log" };
-        logItem.Click += (s, e) => OpenLogFile();
-        flyout.Items.Add(logItem);
-
-        flyout.Items.Add(new MenuFlyoutSeparator());
-
-        var exitItem = new MenuFlyoutItem { Text = "❌ Exit" };
-        exitItem.Click += (s, e) => ExitApplication();
-        flyout.Items.Add(exitItem);
-
-        return flyout;
-    }
-
     private async void ShowTrayMenuPopup()
     {
         try
@@ -403,7 +296,9 @@ public partial class App : Application
             case "webchat": ShowWebChat(); break;
             case "quicksend": ShowQuickSend(); break;
             case "history": ShowNotificationHistory(); break;
-            case "healthcheck": _ = RunHealthCheckAsync(); break;
+            case "sessions": OpenDashboard("sessions"); break;
+            case "cron": OpenDashboard("cron"); break;
+            case "servicehealth": ShowStatusDetail(); break;
             case "settings": ShowSettings(); break;
             case "autostart": ToggleAutoStart(); break;
             case "log": OpenLogFile(); break;
@@ -449,7 +344,7 @@ public partial class App : Application
         if (_lastSessions.Length > 0)
         {
             menu.AddSeparator();
-            menu.AddMenuItem($"Sessions ({_lastSessions.Length})", "💬", "dashboard:sessions");
+            menu.AddMenuItem($"Sessions ({_lastSessions.Length})", "💬", "sessions");
 
             foreach (var session in _lastSessions.Take(5))
             {
@@ -507,168 +402,21 @@ public partial class App : Application
         menu.AddMenuItem("Open Dashboard", "🌐", "dashboard");
         menu.AddMenuItem("Open Web Chat", "💬", "webchat");
         menu.AddMenuItem("Quick Send...", "📤", "quicksend");
+        menu.AddMenuItem("Cron Jobs", "⏱", "cron");
         menu.AddMenuItem("Notification History...", "📋", "history");
-        menu.AddMenuItem("Run Health Check", "🔄", "healthcheck");
+        menu.AddMenuItem("Service Health...", "♥", "servicehealth");
 
         menu.AddSeparator();
 
         // Settings
         menu.AddMenuItem("Settings...", "⚙️", "settings");
-        var autoStartText = (_settings?.AutoStart ?? false) ? "Auto-start ✓" : "Auto-start";
-        menu.AddMenuItem(autoStartText, "🚀", "autostart");
+        var autoStartEnabled = _settings?.AutoStart ?? false;
+        menu.AddMenuItem(autoStartEnabled ? "Auto-start: On" : "Auto-start: Off", autoStartEnabled ? "✓" : "○", "autostart");
 
         menu.AddSeparator();
 
         menu.AddMenuItem("Open Log File", "📄", "log");
         menu.AddMenuItem("Exit", "❌", "exit");
-    }
-
-    // Keep the old MenuFlyout method for reference but it won't be used
-    private void BuildTrayMenu(MenuFlyout flyout)
-    {
-        // Brand header
-        var brandItem = new MenuFlyoutItem
-        {
-            Text = "🦞 OpenClaw Tray",
-            IsEnabled = false
-        };
-        flyout.Items.Add(brandItem);
-        flyout.Items.Add(new MenuFlyoutSeparator());
-
-        // Status
-        var statusIcon = _currentStatus switch
-        {
-            ConnectionStatus.Connected => "✅",
-            ConnectionStatus.Connecting => "🔄",
-            ConnectionStatus.Error => "❌",
-            _ => "⚪"
-        };
-        var statusItem = new MenuFlyoutItem
-        {
-            Text = $"{statusIcon} Status: {_currentStatus}"
-        };
-        statusItem.Click += (s, e) => ShowStatusDetail();
-        flyout.Items.Add(statusItem);
-
-        // Activity (if any)
-        if (_currentActivity != null && _currentActivity.Kind != OpenClaw.Shared.ActivityKind.Idle)
-        {
-            var activityItem = new MenuFlyoutItem
-            {
-                Text = $"{_currentActivity.Glyph} {_currentActivity.DisplayText}",
-                IsEnabled = false
-            };
-            flyout.Items.Add(activityItem);
-        }
-
-        // Usage
-        if (_lastUsage != null)
-        {
-            var usageItem = new MenuFlyoutItem
-            {
-                Text = $"📊 {_lastUsage.DisplayText}",
-                IsEnabled = false
-            };
-            flyout.Items.Add(usageItem);
-        }
-
-        // Sessions
-        if (_lastSessions.Length > 0)
-        {
-            flyout.Items.Add(new MenuFlyoutSeparator());
-            var sessionsHeader = new MenuFlyoutItem
-            {
-                Text = $"💬 Sessions ({_lastSessions.Length})"
-            };
-            sessionsHeader.Click += (s, e) => OpenDashboard("sessions");
-            flyout.Items.Add(sessionsHeader);
-
-            foreach (var session in _lastSessions.Take(5))
-            {
-                var sessionItem = new MenuFlyoutItem
-                {
-                    Text = $"   • {session.DisplayText}"
-                };
-                sessionItem.Click += (s, e) => OpenDashboard($"sessions/{session.Key}");
-                flyout.Items.Add(sessionItem);
-            }
-        }
-
-        // Channels
-        if (_lastChannels.Length > 0)
-        {
-            flyout.Items.Add(new MenuFlyoutSeparator());
-            var channelsHeader = new MenuFlyoutItem
-            {
-                Text = "📡 Channels",
-                IsEnabled = false
-            };
-            flyout.Items.Add(channelsHeader);
-
-            foreach (var channel in _lastChannels)
-            {
-                var channelIcon = channel.Status?.ToLowerInvariant() switch
-                {
-                    "ok" or "connected" or "running" => "🟢",
-                    "connecting" or "reconnecting" => "🟡",
-                    _ => "🔴"
-                };
-                var channelItem = new MenuFlyoutItem
-                {
-                    Text = $"   {channelIcon} {channel.Name}"
-                };
-                channelItem.Click += (s, e) => ToggleChannel(channel.Name);
-                flyout.Items.Add(channelItem);
-            }
-        }
-
-        flyout.Items.Add(new MenuFlyoutSeparator());
-
-        // Actions
-        var dashboardItem = new MenuFlyoutItem { Text = "🌐 Open Dashboard" };
-        dashboardItem.Click += (s, e) => OpenDashboard();
-        flyout.Items.Add(dashboardItem);
-
-        var webChatItem = new MenuFlyoutItem { Text = "💬 Open Web Chat" };
-        webChatItem.Click += (s, e) => ShowWebChat();
-        flyout.Items.Add(webChatItem);
-
-        var quickSendItem = new MenuFlyoutItem { Text = "📤 Quick Send..." };
-        quickSendItem.Click += (s, e) => ShowQuickSend();
-        flyout.Items.Add(quickSendItem);
-
-        var historyItem = new MenuFlyoutItem { Text = "📋 Notification History..." };
-        historyItem.Click += (s, e) => ShowNotificationHistory();
-        flyout.Items.Add(historyItem);
-
-        var healthCheckItem = new MenuFlyoutItem { Text = "🔄 Run Health Check" };
-        healthCheckItem.Click += async (s, e) => await RunHealthCheckAsync();
-        flyout.Items.Add(healthCheckItem);
-
-        flyout.Items.Add(new MenuFlyoutSeparator());
-
-        // Settings
-        var settingsItem = new MenuFlyoutItem { Text = "⚙️ Settings..." };
-        settingsItem.Click += (s, e) => ShowSettings();
-        flyout.Items.Add(settingsItem);
-
-        var autoStartItem = new ToggleMenuFlyoutItem
-        {
-            Text = "🚀 Auto-start",
-            IsChecked = _settings?.AutoStart ?? false
-        };
-        autoStartItem.Click += (s, e) => ToggleAutoStart();
-        flyout.Items.Add(autoStartItem);
-
-        flyout.Items.Add(new MenuFlyoutSeparator());
-
-        var logItem = new MenuFlyoutItem { Text = "📄 Open Log File" };
-        logItem.Click += (s, e) => OpenLogFile();
-        flyout.Items.Add(logItem);
-
-        var exitItem = new MenuFlyoutItem { Text = "❌ Exit" };
-        exitItem.Click += (s, e) => ExitApplication();
-        flyout.Items.Add(exitItem);
     }
 
     #region Gateway Client

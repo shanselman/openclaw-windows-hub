@@ -97,9 +97,7 @@ public sealed partial class TrayMenuWindow : WindowEx
     private void OnActivated(object sender, WindowActivatedEventArgs args)
     {
         if (args.WindowActivationState == WindowActivationState.Deactivated)
-        {
             this.Hide();
-        }
     }
 
     public void ShowAtCursor()
@@ -174,6 +172,8 @@ public sealed partial class TrayMenuWindow : WindowEx
 
         if (!isEnabled)
             content.Opacity = 0.5;
+        if (string.IsNullOrEmpty(action))
+            button.IsEnabled = false;
 
         button.Click += (s, e) =>
         {
