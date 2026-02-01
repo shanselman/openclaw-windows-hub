@@ -296,10 +296,7 @@ public partial class App : Application
             case "webchat": ShowWebChat(); break;
             case "quicksend": ShowQuickSend(); break;
             case "history": ShowNotificationHistory(); break;
-            case "sessions":
-            case "dashboard:sessions":
-                OpenDashboard("sessions");
-                break;
+            case "sessions": OpenDashboard("sessions"); break;
             case "cron": OpenDashboard("cron"); break;
             case "servicehealth": ShowStatusDetail(); break;
             case "settings": ShowSettings(); break;
