@@ -296,7 +296,6 @@ public partial class App : Application
             case "webchat": ShowWebChat(); break;
             case "quicksend": ShowQuickSend(); break;
             case "history": ShowNotificationHistory(); break;
-            case "sessions": OpenDashboard("sessions"); break;
             case "cron": OpenDashboard("cron"); break;
             case "servicehealth": ShowStatusDetail(); break;
             case "settings": ShowSettings(); break;
@@ -346,7 +345,7 @@ public partial class App : Application
         if (_lastSessions.Length > 0)
         {
             menu.AddSeparator();
-            menu.AddMenuItem($"Sessions ({_lastSessions.Length})", "💬", "sessions");
+            menu.AddMenuItem($"Sessions ({_lastSessions.Length})", "💬", "dashboard:sessions");
 
             foreach (var session in _lastSessions.Take(5))
             {
