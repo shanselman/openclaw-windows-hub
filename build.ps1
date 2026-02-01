@@ -77,25 +77,16 @@ if (-not $dotnetVersion) {
 } else {
     Write-Success ".NET SDK: $dotnetVersion"
     
-    # Check for .NET 10 (needed for WinForms tray)
+    # Check for .NET 10 (needed for all projects)
     $sdks = & dotnet --list-sdks 2>$null
     $hasNet10 = $sdks | Where-Object { $_ -match "^10\." }
-    $hasNet9 = $sdks | Where-Object { $_ -match "^9\." }
     
     if (-not $hasNet10) {
-        Write-Warning ".NET 10 SDK not found (needed for OpenClaw.Tray WinForms)"
+        Write-Error ".NET 10 SDK not found (required for all projects)"
         Write-Info "Download preview from: https://dotnet.microsoft.com/download/dotnet/10.0"
-        $issues += "Missing .NET 10 SDK (for WinForms tray)"
+        $issues += "Missing .NET 10 SDK"
     } else {
         Write-Success ".NET 10 SDK available"
-    }
-    
-    if (-not $hasNet9) {
-        Write-Warning ".NET 9 SDK not found (needed for OpenClaw.Tray.WinUI)"
-        Write-Info "Download from: https://dotnet.microsoft.com/download/dotnet/9.0"
-        $issues += "Missing .NET 9 SDK (for WinUI tray)"
-    } else {
-        Write-Success ".NET 9 SDK available"
     }
 }
 
@@ -212,7 +203,7 @@ if ($failCount -eq 0) {
         Write-Host "  WinForms: dotnet run --project src/OpenClaw.Tray/OpenClaw.Tray.csproj" -ForegroundColor White
     }
     if ($buildResults.ContainsKey("WinUI") -or $buildResults.ContainsKey("All")) {
-        Write-Host "  WinUI:    .\src\OpenClaw.Tray.WinUI\bin\$Configuration\net9.0-windows10.0.19041.0\OpenClaw.Tray.WinUI.exe" -ForegroundColor White
+        Write-Host "  WinUI:    .\src\OpenClaw.Tray.WinUI\bin\$Configuration\net10.0-windows10.0.19041.0\OpenClaw.Tray.WinUI.exe" -ForegroundColor White
     }
 } else {
     Write-Host "❌ $failCount build(s) failed" -ForegroundColor Red
