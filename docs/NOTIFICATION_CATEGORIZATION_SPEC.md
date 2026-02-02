@@ -23,7 +23,7 @@ Replace the current keyword-only categorization with a layered system that prefe
 ## Proposed Data Model
 
 ### Notification Metadata (from gateway)
-Extend the gateway notification payload with optional metadata and map it into `OpenClawNotification` in `OpenClawGatewayClient`:
+Extend the gateway notification payload with optional metadata and map it into `OpenClawNotification` in `OpenClawGatewayClient` (`OpenClaw.Shared/OpenClawGatewayClient.cs`):
 - `Channel` (string): e.g., `telegram`, `whatsapp`, `email`, `calendar`, `chat`.
 - `SessionKey` (string): gateway session id.
 - `Agent` (string): agent name/identifier.
@@ -58,6 +58,7 @@ Order of operations (first match wins):
 - `calendar` → `calendar`
 - `email` → `email`
 - `ci`/`build` → `build`
+- `inventory`/`stock` → `stock`
 - `chat`/`assistant` → `info` (unless `IsChat` is off)
 - `health` → `health`
 - `alerts` → `urgent`
