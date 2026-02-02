@@ -16,14 +16,14 @@ Replace the current keyword-only categorization with a layered system that prefe
 - Deprecating existing keyword categories immediately.
 
 ## Current Behavior
-- `ClassifyNotification(text)` matches fixed keywords and returns category/title.
+- `ClassifyNotification(string text) -> (string title, string type)` matches fixed keywords and returns category/title.
 - Settings UI documents keyword-based filtering.
 - Per-category toggles (Health/Urgent/Reminder/etc.) are used to filter display.
 
 ## Proposed Data Model
 
 ### Notification Metadata (from gateway)
-Extend `OpenClawNotification` (or gateway payload) with optional metadata:
+Extend the gateway notification payload with optional metadata and map it into `OpenClawNotification` in `OpenClawGatewayClient`:
 - `Channel` (string): e.g., `telegram`, `whatsapp`, `email`, `calendar`, `chat`.
 - `SessionKey` (string): gateway session id.
 - `Agent` (string): agent name/identifier.
@@ -105,5 +105,4 @@ Add a debug log line on classification:
 
 ## Open Questions
 - Which gateway event types can provide `Intent` or `Channel` today?
-- Should user rules apply to `Title` only, or `Title + Message`?
 - Should per-agent rules be derived from `SessionInfo.Channel` when missing?
