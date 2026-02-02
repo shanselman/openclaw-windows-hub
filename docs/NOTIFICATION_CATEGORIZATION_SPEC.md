@@ -24,7 +24,7 @@ Replace the current keyword-only categorization with a layered system that prefe
 
 ### Notification Metadata (from gateway)
 Extend the gateway notification payload with optional metadata and map it into `OpenClawNotification` in `OpenClawGatewayClient` (`OpenClaw.Shared/OpenClawGatewayClient.cs`):
-- `Channel` (string): e.g., `telegram`, `whatsapp`, `email`, `calendar`, `chat`. When `SessionKey` is present and `Channel` is missing, copy the gateway session `channel` field into this metadata value.
+- `Channel` (string): e.g., `telegram`, `whatsapp`, `email`, `calendar`, `chat`. When `SessionKey` is present and `Channel` is missing, `OpenClawGatewayClient` should copy the gateway session `channel` field into this metadata value during payload mapping.
 - `SessionKey` (string): gateway session id.
 - `Agent` (string): agent name/identifier.
 - `Intent` (string): normalized intent (e.g., `reminder`, `build`, `alert`).
@@ -45,7 +45,7 @@ Order of operations (first match wins):
 2. **Structured category**:
    - If `Intent` is provided → map to category table.
    - If `Channel` or `Agent` maps to a fixed category → use it.
-   - If `Agent` is missing, optionally fall back to the session `Channel` for agent-based rules.
+   - If `Agent` is missing, optionally skip agent-based rules and rely on `Channel` mapping only (open question below).
 3. **User rules**:
    - Regex/keyword rules over `Title` + `Message`.
 4. **Legacy keyword fallback**:
@@ -107,4 +107,4 @@ Add a debug log line on classification:
 
 ## Open Questions
 - Which gateway event types can provide `Intent` or `Channel` today?
-- Should per-agent rules fall back to the gateway session `Channel` field when the `Agent` field is missing?
+- Should agent-based rules be skipped when `Agent` is missing, or should `Channel` be used as a fallback for agent-based rules?
