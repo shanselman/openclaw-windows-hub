@@ -106,4 +106,4 @@ Add a debug log line on classification:
 
 ## Open Questions
 - Which gateway event types can provide `Intent` or `Channel` today?
-- Should per-agent rules be derived from the gateway session `channel` field (matching the `Channel` value above) when the Agent field is missing?
+- Should per-agent rules be derived from the gateway session `channel` field (the same value mapped into the notification `Channel` metadata) when the Agent field is missing?
