@@ -28,7 +28,7 @@ Extend the gateway notification payload with optional metadata and map it into `
 - `SessionKey` (string): gateway session id.
 - `Agent` (string): agent name/identifier.
 - `Intent` (string): normalized intent (e.g., `reminder`, `build`, `alert`).
-- `IsChat` (bool): explicit flag for chat responses (already in model).
+- `IsChat` (bool): explicit flag for chat responses (already exists in `OpenClawNotification`).
 - `Tags` (string[]): free-form tags for routing.
 
 ### Settings (persisted)
@@ -59,7 +59,7 @@ Order of operations (first match wins):
 - `email` → `email`
 - `ci`/`build` → `build`
 - `inventory`/`stock` → `stock`
-- `chat`/`assistant` → `info` (unless `IsChat` is off)
+- `chat`/`assistant` → `info` (only when `IsChat` is false or chat responses are enabled)
 - `health` → `health`
 - `alerts` → `urgent`
 
@@ -106,4 +106,4 @@ Add a debug log line on classification:
 
 ## Open Questions
 - Which gateway event types can provide `Intent` or `Channel` today?
-- Should per-agent rules be derived from `SessionInfo.Channel` when missing?
+- Should per-agent rules be derived from the gateway session metadata `channel` field when missing?
