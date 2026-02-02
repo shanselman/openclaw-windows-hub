@@ -783,12 +783,38 @@ public partial class App : Application
                 .AddText(notification.Title ?? "OpenClaw")
                 .AddText(notification.Message);
 
+            // Add category-specific inline image (emoji rendered as text is fine, 
+            // but we can add app logo override for better visibility)
+            var logoPath = GetNotificationIcon(notification.Type);
+            if (!string.IsNullOrEmpty(logoPath) && System.IO.File.Exists(logoPath))
+            {
+                builder.AddAppLogoOverride(new Uri(logoPath), ToastGenericAppLogoCrop.Circle);
+            }
+
+            // Add "Open Chat" button for chat notifications
+            if (notification.IsChat)
+            {
+                builder.AddArgument("action", "open_chat")
+                       .AddButton(new ToastButton()
+                           .SetContent("Open Chat")
+                           .AddArgument("action", "open_chat"));
+            }
+
             builder.Show();
         }
         catch (Exception ex)
         {
             Logger.Warn($"Failed to show toast: {ex.Message}");
         }
+    }
+
+    private static string? GetNotificationIcon(string? type)
+    {
+        // For now, use the app icon for all notifications
+        // In the future, we could create category-specific icons
+        var appDir = AppContext.BaseDirectory;
+        var iconPath = System.IO.Path.Combine(appDir, "Assets", "claw.ico");
+        return System.IO.File.Exists(iconPath) ? iconPath : null;
     }
 
     private bool ShouldShowNotification(OpenClawNotification notification)
@@ -1233,6 +1259,9 @@ public partial class App : Application
                         break;
                     case "open_settings":
                         ShowSettings();
+                        break;
+                    case "open_chat":
+                        ShowWebChat();
                         break;
                 }
             });

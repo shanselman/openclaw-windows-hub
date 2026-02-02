@@ -568,21 +568,59 @@ public class OpenClawGatewayClient : IDisposable
         
         if (!root.TryGetProperty("payload", out var payload)) return;
 
-        if (payload.TryGetProperty("text", out var textProp))
+        // Try new format: payload.message.role + payload.message.content[].text
+        if (payload.TryGetProperty("message", out var message))
+        {
+            if (message.TryGetProperty("role", out var role) && role.GetString() == "assistant")
+            {
+                // Extract text from content array
+                if (message.TryGetProperty("content", out var content) && content.ValueKind == JsonValueKind.Array)
+                {
+                    foreach (var item in content.EnumerateArray())
+                    {
+                        if (item.TryGetProperty("type", out var type) && type.GetString() == "text" &&
+                            item.TryGetProperty("text", out var textProp))
+                        {
+                            var text = textProp.GetString() ?? "";
+                            if (!string.IsNullOrEmpty(text) && 
+                                payload.TryGetProperty("state", out var state) && 
+                                state.GetString() == "final")
+                            {
+                                _logger.Info($"Assistant response: {text.Substring(0, Math.Min(100, text.Length))}...");
+                                EmitChatNotification(text);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // Legacy format: payload.text + payload.role
+        else if (payload.TryGetProperty("text", out var textProp))
         {
             var text = textProp.GetString() ?? "";
             if (payload.TryGetProperty("role", out var role) &&
                 role.GetString() == "assistant" &&
                 !string.IsNullOrEmpty(text))
             {
-                _logger.Info($"Assistant response: {text.Substring(0, Math.Min(100, text.Length))}");
-                // Only notify for short assistant messages (likely alerts/responses)
-                if (text.Length < 500)
-                {
-                    EmitNotification(text);
-                }
+                _logger.Info($"Assistant response (legacy): {text.Substring(0, Math.Min(100, text.Length))}");
+                EmitChatNotification(text);
             }
         }
+    }
+
+    private void EmitChatNotification(string text)
+    {
+        var (title, type) = ClassifyNotification(text);
+        // Truncate long messages but always notify
+        var displayText = text.Length > 200 ? text[..200] + "…" : text;
+        NotificationReceived?.Invoke(this, new OpenClawNotification
+        {
+            Title = title,
+            Message = displayText,
+            Type = type,
+            IsChat = true
+        });
     }
 
     private void HandleSessionEvent(JsonElement root)
