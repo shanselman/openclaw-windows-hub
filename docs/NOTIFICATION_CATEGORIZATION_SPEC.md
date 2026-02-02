@@ -24,7 +24,7 @@ Replace the current keyword-only categorization with a layered system that prefe
 
 ### Notification Metadata (from gateway)
 Extend the gateway notification payload with optional metadata and map it into `OpenClawNotification` in `OpenClawGatewayClient` (`OpenClaw.Shared/OpenClawGatewayClient.cs`):
-- `Channel` (string): e.g., `telegram`, `whatsapp`, `email`, `calendar`, `chat`. If available, this should mirror the gateway session `channel` field for the `SessionKey`.
+- `Channel` (string): e.g., `telegram`, `whatsapp`, `email`, `calendar`, `chat`. When `SessionKey` is present, copy the gateway session `channel` field into this metadata value.
 - `SessionKey` (string): gateway session id.
 - `Agent` (string): agent name/identifier.
 - `Intent` (string): normalized intent (e.g., `reminder`, `build`, `alert`).
@@ -106,4 +106,4 @@ Add a debug log line on classification:
 
 ## Open Questions
 - Which gateway event types can provide `Intent` or `Channel` today?
-- Should per-agent rules be derived from the gateway session `Channel` field when the `Agent` field is missing, using the notification `Channel` metadata as the source of truth?
+- Should per-agent rules fall back to the gateway session `Channel` field when the `Agent` field is missing?
