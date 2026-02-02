@@ -39,7 +39,7 @@ jobs:
       run: dotnet build src/OpenClaw.Tray -c Debug
 
     - name: Build Tray App (WinUI)
-      run: dotnet build src/OpenClaw.Tray.WinUI -c Debug
+      run: dotnet build src/OpenClaw.Tray.WinUI -c Debug -r win-x64
 
     - name: Build Tests
       run: dotnet build tests/OpenClaw.Shared.Tests -c Debug
