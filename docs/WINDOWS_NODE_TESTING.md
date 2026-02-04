@@ -84,6 +84,23 @@ When the node connects, it advertises these capabilities:
 - If you see "Camera access blocked", enable camera access for desktop apps in Windows Privacy settings
 - Packaged MSIX builds will show the system consent prompt automatically
 
+## Remaining Work (Roadmap)
+
+1. **system.run + exec approvals**
+   - Implement `system.run` with PowerShell/cmd support
+   - Add `system.execApprovals` allowlist flow
+2. **screen.record**
+   - Graphics Capture video recording (MP4/base64)
+3. **camera.clip**
+   - Short webcam video capture (MediaCapture + encoding)
+4. **A2UI end-to-end**
+   - Resolve tool policy/allowlist and validate JSONL rendering
+5. **Packaging & consent prompts**
+   - MSIX packaging with camera/screen capabilities for system prompts
+6. **Test matrix & polish**
+   - Canvas/screen/camera regression tests
+   - Handle timeouts/disconnects, reduce verbose logging
+
 ## Files Involved
 
 - `src/OpenClaw.Shared/WindowsNodeClient.cs` - Node protocol client
