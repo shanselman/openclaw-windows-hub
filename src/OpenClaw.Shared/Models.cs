@@ -78,6 +78,23 @@ public class OpenClawNotification
     public string Message { get; set; } = "";
     public string Type { get; set; } = "";
     public bool IsChat { get; set; } = false; // True if from chat response
+
+    // Structured metadata (populated by gateway when available)
+    public string? Channel { get; set; }   // e.g. telegram, email, chat
+    public string? Agent { get; set; }     // agent name/identifier
+    public string? Intent { get; set; }    // normalized intent (reminder, build, alert)
+    public string[]? Tags { get; set; }    // free-form routing tags
+}
+
+/// <summary>
+/// A user-defined notification categorization rule.
+/// </summary>
+public class UserNotificationRule
+{
+    public string Pattern { get; set; } = "";
+    public bool IsRegex { get; set; }
+    public string Category { get; set; } = "info";
+    public bool Enabled { get; set; } = true;
 }
 
 public class ChannelHealth

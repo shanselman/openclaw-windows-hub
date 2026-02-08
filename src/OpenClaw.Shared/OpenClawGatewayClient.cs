@@ -611,16 +611,16 @@ public class OpenClawGatewayClient : IDisposable
 
     private void EmitChatNotification(string text)
     {
-        var (title, type) = ClassifyNotification(text);
-        // Truncate long messages but always notify
         var displayText = text.Length > 200 ? text[..200] + "…" : text;
-        NotificationReceived?.Invoke(this, new OpenClawNotification
+        var notification = new OpenClawNotification
         {
-            Title = title,
             Message = displayText,
-            Type = type,
             IsChat = true
-        });
+        };
+        var (title, type) = _categorizer.Classify(notification);
+        notification.Title = title;
+        notification.Type = type;
+        NotificationReceived?.Invoke(this, notification);
     }
 
     private void HandleSessionEvent(JsonElement root)
@@ -875,44 +875,23 @@ public class OpenClawGatewayClient : IDisposable
 
     // --- Notification classification ---
 
+    private static readonly NotificationCategorizer _categorizer = new();
+
     private void EmitNotification(string text)
     {
-        var (title, type) = ClassifyNotification(text);
-        NotificationReceived?.Invoke(this, new OpenClawNotification
+        var notification = new OpenClawNotification
         {
-            Title = title,
-            Message = text.Length > 200 ? text[..200] + "…" : text,
-            Type = type
-        });
+            Message = text.Length > 200 ? text[..200] + "…" : text
+        };
+        var (title, type) = _categorizer.Classify(notification);
+        notification.Title = title;
+        notification.Type = type;
+        NotificationReceived?.Invoke(this, notification);
     }
 
     private static (string title, string type) ClassifyNotification(string text)
     {
-        var lower = text.ToLowerInvariant();
-        if (lower.Contains("blood sugar") || lower.Contains("glucose") ||
-            lower.Contains("cgm") || lower.Contains("mg/dl"))
-            return ("🩸 Blood Sugar Alert", "health");
-        if (lower.Contains("urgent") || lower.Contains("critical") ||
-            lower.Contains("emergency"))
-            return ("🚨 Urgent Alert", "urgent");
-        if (lower.Contains("reminder"))
-            return ("⏰ Reminder", "reminder");
-        if (lower.Contains("stock") || lower.Contains("in stock") ||
-            lower.Contains("available now"))
-            return ("📦 Stock Alert", "stock");
-        if (lower.Contains("email") || lower.Contains("inbox") ||
-            lower.Contains("gmail"))
-            return ("📧 Email", "email");
-        if (lower.Contains("calendar") || lower.Contains("meeting") ||
-            lower.Contains("event"))
-            return ("📅 Calendar", "calendar");
-        if (lower.Contains("error") || lower.Contains("failed") ||
-            lower.Contains("exception"))
-            return ("⚠️ Error", "error");
-        if (lower.Contains("build") || lower.Contains("ci ") ||
-            lower.Contains("deploy"))
-            return ("🔨 Build", "build");
-        return ("🤖 OpenClaw", "info");
+        return NotificationCategorizer.ClassifyByKeywords(text);
     }
 
     // --- Utility ---

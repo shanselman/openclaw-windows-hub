@@ -36,6 +36,11 @@ public class SettingsManager
     public bool NotifyBuild { get; set; } = true;
     public bool NotifyStock { get; set; } = true;
     public bool NotifyInfo { get; set; } = true;
+
+    // Enhanced categorization
+    public bool NotifyChatResponses { get; set; } = true;
+    public bool PreferStructuredCategories { get; set; } = true;
+    public List<OpenClaw.Shared.UserNotificationRule> UserRules { get; set; } = new();
     
     // Node mode (enables Windows as a node, not just operator)
     public bool EnableNodeMode { get; set; } = false;
@@ -70,6 +75,10 @@ public class SettingsManager
                     NotifyStock = loaded.NotifyStock;
                     NotifyInfo = loaded.NotifyInfo;
                     EnableNodeMode = loaded.EnableNodeMode;
+                    NotifyChatResponses = loaded.NotifyChatResponses;
+                    PreferStructuredCategories = loaded.PreferStructuredCategories;
+                    if (loaded.UserRules != null)
+                        UserRules = loaded.UserRules;
                 }
             }
         }
@@ -101,7 +110,10 @@ public class SettingsManager
                 NotifyBuild = NotifyBuild,
                 NotifyStock = NotifyStock,
                 NotifyInfo = NotifyInfo,
-                EnableNodeMode = EnableNodeMode
+                EnableNodeMode = EnableNodeMode,
+                NotifyChatResponses = NotifyChatResponses,
+                PreferStructuredCategories = PreferStructuredCategories,
+                UserRules = UserRules
             };
 
             var options = new JsonSerializerOptions { WriteIndented = true };
@@ -133,5 +145,8 @@ public class SettingsManager
         public bool NotifyStock { get; set; } = true;
         public bool NotifyInfo { get; set; } = true;
         public bool EnableNodeMode { get; set; } = false;
+        public bool NotifyChatResponses { get; set; } = true;
+        public bool PreferStructuredCategories { get; set; } = true;
+        public List<OpenClaw.Shared.UserNotificationRule>? UserRules { get; set; }
     }
 }

@@ -1069,6 +1069,10 @@ public partial class App : Application
     {
         if (_settings == null) return true;
 
+        // Chat toggle: suppress all chat responses if disabled
+        if (notification.IsChat && !_settings.NotifyChatResponses)
+            return false;
+
         return notification.Type?.ToLowerInvariant() switch
         {
             "health" => _settings.NotifyHealth,
@@ -1079,6 +1083,7 @@ public partial class App : Application
             "build" => _settings.NotifyBuild,
             "stock" => _settings.NotifyStock,
             "info" => _settings.NotifyInfo,
+            "error" => _settings.NotifyUrgent, // errors follow urgent setting
             _ => true
         };
     }

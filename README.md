@@ -80,7 +80,7 @@ Modern Windows 11-style system tray companion that connects to your local OpenCl
 - 🔄 **Auto-updates** - Automatic updates from GitHub Releases
 - 🌐 **Web Chat** - Embedded chat window with WebView2
 - 📊 **Live Status** - Real-time sessions, channels, and usage display
-- 🔔 **Toast Notifications** - Clickable Windows notifications with filters
+- 🔔 **Toast Notifications** - Clickable Windows notifications with [smart categorization](docs/NOTIFICATION_CATEGORIZATION.md)
 - 📡 **Channel Control** - Start/stop Telegram & WhatsApp from the menu
 - ⏱ **Cron Jobs** - Quick access to scheduled tasks
 - 🚀 **Auto-start** - Launch with Windows
