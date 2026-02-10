@@ -10,8 +10,6 @@
     <ApplicationIcon>Assets\openclaw.ico</ApplicationIcon>
     <RootNamespace>OpenClawTray</RootNamespace>
     <Version>0.3.0</Version>
-    <FileVersion>0.2.0</FileVersion>
-    <AssemblyVersion>0.2.0</AssemblyVersion>
   </PropertyGroup>
 
   <!-- Unpackaged (default): traditional EXE distribution via Inno Setup -->
