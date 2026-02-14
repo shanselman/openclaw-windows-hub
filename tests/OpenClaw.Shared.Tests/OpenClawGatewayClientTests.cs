@@ -338,4 +338,26 @@ public class OpenClawGatewayClientTests
         // Should not throw
         Assert.NotNull(client);
     }
+
+    [Theory]
+    [InlineData("http://localhost:18789", "ws://localhost:18789")]
+    [InlineData("https://host.tailnet.ts.net", "wss://host.tailnet.ts.net")]
+    [InlineData("http://example.com:8080", "ws://example.com:8080")]
+    [InlineData("https://example.com:443", "wss://example.com:443")]
+    [InlineData("ws://localhost:18789", "ws://localhost:18789")]
+    [InlineData("wss://host.tailnet.ts.net", "wss://host.tailnet.ts.net")]
+    [InlineData("HTTP://LOCALHOST:18789", "ws://LOCALHOST:18789")]
+    [InlineData("HTTPS://HOST.EXAMPLE.COM", "wss://HOST.EXAMPLE.COM")]
+    public void Constructor_NormalizesHttpToWs(string inputUrl, string expectedWsUrl)
+    {
+        // Arrange & Act
+        var client = new OpenClawGatewayClient(inputUrl, "test-token");
+        
+        // Assert - Use reflection to check internal _gatewayUrl field
+        var field = typeof(OpenClawGatewayClient).GetField("_gatewayUrl", 
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        var actualUrl = field?.GetValue(client) as string;
+        
+        Assert.Equal(expectedWsUrl, actualUrl);
+    }
 }

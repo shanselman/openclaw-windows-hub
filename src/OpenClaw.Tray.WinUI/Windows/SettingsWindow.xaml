@@ -27,7 +27,7 @@
                                Foreground="#E74C3C" FontWeight="Bold"/>
                     
                     <TextBox x:Name="GatewayUrlTextBox" Header="Gateway URL" 
-                             PlaceholderText="ws://localhost:18789"/>
+                             PlaceholderText="ws://localhost:18789 or https://host.tailnet.ts.net"/>
                     
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <TextBox x:Name="TokenTextBox" Header="Token" 

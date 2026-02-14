@@ -25,6 +25,7 @@ A comprehensive guide for building, running, and contributing to the OpenClaw Wi
 
 - **A running OpenClaw gateway instance** - The gateway provides the backend for chat, sessions, and notifications
   - Default gateway URL: `ws://localhost:18789`
+  - Remote gateways: Supports `https://` URLs (e.g., Tailscale Serve) - automatically converted to `wss://`
   - You'll need a valid authentication token from your OpenClaw instance
 
 ### For PowerToys Extension Development
@@ -228,6 +229,9 @@ The `OpenClawGatewayClient` manages the connection to the OpenClaw gateway:
 
 **Connection Flow:**
 1. WebSocket connects to gateway URL (default: `ws://localhost:18789`)
+   - Supports local WebSocket URLs: `ws://localhost:18789`
+   - Supports remote HTTPS URLs: `https://host.tailnet.ts.net` (auto-converted to `wss://`)
+   - Supports explicit WebSocket Secure: `wss://host.example.com`
 2. Client waits for `challenge` event from gateway
 3. Client responds with authentication token
 4. Gateway sends `connected` event confirming authentication
@@ -742,6 +746,13 @@ gh run download <run-id> --repo shanselman/openclaw-windows-hub
    - Check gateway URL in settings
    - Verify authentication token is correct
    - Check firewall settings
+
+6. **Connecting to Remote Gateway (Tailscale Serve, etc.)**
+   - The app supports both local (`ws://`) and remote (`https://`, `wss://`) gateways
+   - For Tailscale Serve: Enter `https://host.tailnet.ts.net` (automatically converted to `wss://`)
+   - For local gateway: Use `ws://localhost:18789` or `http://localhost:18789`
+   - The app automatically normalizes `http://` to `ws://` and `https://` to `wss://`
+   - Test connection using the "Test" button in Settings
 
 ### Getting Help
 

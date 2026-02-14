@@ -162,6 +162,21 @@ public sealed partial class SettingsWindow : WindowEx
 
     private void OnSave(object sender, RoutedEventArgs e)
     {
+        // Validate gateway URL
+        var gatewayUrl = GatewayUrlTextBox.Text.Trim();
+        if (string.IsNullOrWhiteSpace(gatewayUrl))
+        {
+            StatusLabel.Text = "❌ Gateway URL is required";
+            return;
+        }
+        
+        if (!Uri.TryCreate(gatewayUrl, UriKind.Absolute, out var uri) ||
+            (uri.Scheme != "ws" && uri.Scheme != "wss" && uri.Scheme != "http" && uri.Scheme != "https"))
+        {
+            StatusLabel.Text = "❌ Gateway URL must be a valid URL (ws://, wss://, http://, or https://)";
+            return;
+        }
+        
         SaveSettings();
         SettingsSaved?.Invoke(this, EventArgs.Empty);
         Close();

@@ -315,9 +315,9 @@ public partial class SettingsDialog : ModernForm
         }
 
         if (!Uri.TryCreate(_gatewayUrlTextBox.Text.Trim(), UriKind.Absolute, out var uri) ||
-            (uri.Scheme != "ws" && uri.Scheme != "wss"))
+            (uri.Scheme != "ws" && uri.Scheme != "wss" && uri.Scheme != "http" && uri.Scheme != "https"))
         {
-            MessageBox.Show("Gateway URL must be a valid WebSocket URL (ws:// or wss://).", "Settings",
+            MessageBox.Show("Gateway URL must be a valid URL (ws://, wss://, http://, or https://).", "Settings",
                           MessageBoxButtons.OK, MessageBoxIcon.Warning);
             _gatewayUrlTextBox.Focus();
             return;
