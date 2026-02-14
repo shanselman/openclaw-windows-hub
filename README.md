@@ -155,8 +155,8 @@ When Node Mode is enabled in Settings, your Windows PC becomes a **node** that t
        "allowCommands": [
          "system.notify",
          "system.run",
-          "system.execApprovals.get",
-          "system.execApprovals.set",
+         "system.execApprovals.get",
+         "system.execApprovals.set",
          "canvas.present",
          "canvas.hide",
          "canvas.navigate",
@@ -171,7 +171,7 @@ When Node Mode is enabled in Settings, your Windows PC becomes a **node** that t
        ]
      }
    }
-    ```
+   ```
    > ⚠️ **Important**: The gateway has a server-side allowlist. Commands must be listed explicitly - wildcards like `canvas.*` don't work!
 
 5. **Test it** from your Mac/gateway:
