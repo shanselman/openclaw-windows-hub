@@ -80,11 +80,20 @@ public class ReadmeValidationTests
 
     private static string GetRepositoryRoot()
     {
+        // First, try environment variable (useful for CI/CD and test runners)
+        var envRepoRoot = Environment.GetEnvironmentVariable("OPENCLAW_REPO_ROOT");
+        if (!string.IsNullOrEmpty(envRepoRoot) && Directory.Exists(envRepoRoot))
+        {
+            return envRepoRoot;
+        }
+
+        // Fall back to walking up directory tree to find .git
         var currentDir = Directory.GetCurrentDirectory();
         while (currentDir != null && !Directory.Exists(Path.Combine(currentDir, ".git")))
         {
             currentDir = Directory.GetParent(currentDir)?.FullName;
         }
-        return currentDir ?? throw new InvalidOperationException("Could not find repository root");
+        return currentDir ?? throw new InvalidOperationException(
+            "Could not find repository root. Set OPENCLAW_REPO_ROOT environment variable or ensure .git directory exists.");
     }
 }
