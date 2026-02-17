@@ -12,7 +12,7 @@
   <Identity
     Name="OpenClaw.Tray"
     Publisher="CN=Scott Hanselman, O=Scott Hanselman, L=Forest Grove, S=Oregon, C=US"
-    Version="0.4.2.0" />
+    Version="0.4.3.0" />
 
   <Properties>
     <DisplayName>OpenClaw Tray</DisplayName>

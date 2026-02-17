@@ -14,7 +14,7 @@
     <AssemblyCompany>Scott Hanselman</AssemblyCompany>
     <AssemblyProduct>OpenClaw Tray</AssemblyProduct>
     <Copyright>Copyright © 2026 Scott Hanselman</Copyright>
-    <Version>0.4.2</Version>
+    <Version>0.4.3</Version>
     <PublishSingleFile>true</PublishSingleFile>
     <SelfContained>true</SelfContained>
     <!-- RuntimeIdentifier set at publish time: win-x64 or win-arm64 -->
