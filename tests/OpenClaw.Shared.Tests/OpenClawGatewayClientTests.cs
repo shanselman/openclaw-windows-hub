@@ -66,6 +66,32 @@ public class OpenClawGatewayClientTests
             return _client.GetSessionList();
         }
 
+        public void SetUnsupportedMethodFlags(bool usageStatus, bool usageCost, bool sessionPreview, bool nodeList)
+        {
+            SetPrivateField("_usageStatusUnsupported", usageStatus);
+            SetPrivateField("_usageCostUnsupported", usageCost);
+            SetPrivateField("_sessionPreviewUnsupported", sessionPreview);
+            SetPrivateField("_nodeListUnsupported", nodeList);
+        }
+
+        public (bool UsageStatus, bool UsageCost, bool SessionPreview, bool NodeList) GetUnsupportedMethodFlags()
+        {
+            return (
+                GetPrivateField<bool>("_usageStatusUnsupported"),
+                GetPrivateField<bool>("_usageCostUnsupported"),
+                GetPrivateField<bool>("_sessionPreviewUnsupported"),
+                GetPrivateField<bool>("_nodeListUnsupported")
+            );
+        }
+
+        public void ResetUnsupportedMethodFlags()
+        {
+            var method = typeof(OpenClawGatewayClient).GetMethod(
+                "ResetUnsupportedMethodFlags",
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            method!.Invoke(_client, null);
+        }
+
         public GatewayUsageInfo ParseUsageStatusPayload(string payloadJson)
         {
             InvokePrivatePayloadParser("ParseUsageStatus", payloadJson);
@@ -129,6 +155,22 @@ public class OpenClawGatewayClientTests
                 "_usage",
                 System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
             return (GatewayUsageInfo)(field?.GetValue(_client) ?? new GatewayUsageInfo());
+        }
+
+        private void SetPrivateField(string fieldName, object value)
+        {
+            var field = typeof(OpenClawGatewayClient).GetField(
+                fieldName,
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            field!.SetValue(_client, value);
+        }
+
+        private T GetPrivateField<T>(string fieldName)
+        {
+            var field = typeof(OpenClawGatewayClient).GetField(
+                fieldName,
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            return (T)(field!.GetValue(_client) ?? throw new InvalidOperationException($"Missing field value: {fieldName}"));
         }
     }
 
@@ -536,5 +578,20 @@ public class OpenClawGatewayClientTests
         var actualUrl = field?.GetValue(client) as string;
 
         Assert.Equal(expectedWsUrl, actualUrl);
+    }
+
+    [Fact]
+    public void ResetUnsupportedMethodFlags_ClearsAllUnsupportedFlags()
+    {
+        var helper = new GatewayClientTestHelper();
+
+        helper.SetUnsupportedMethodFlags(usageStatus: true, usageCost: true, sessionPreview: true, nodeList: true);
+        helper.ResetUnsupportedMethodFlags();
+
+        var flags = helper.GetUnsupportedMethodFlags();
+        Assert.False(flags.UsageStatus);
+        Assert.False(flags.UsageCost);
+        Assert.False(flags.SessionPreview);
+        Assert.False(flags.NodeList);
     }
 }

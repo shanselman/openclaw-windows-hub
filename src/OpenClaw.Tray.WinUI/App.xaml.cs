@@ -47,6 +47,7 @@ public partial class App : Application
     private SessionInfo[] _lastSessions = Array.Empty<SessionInfo>();
     private GatewayNodeInfo[] _lastNodes = Array.Empty<GatewayNodeInfo>();
     private readonly Dictionary<string, SessionPreviewInfo> _sessionPreviews = new();
+    private readonly object _sessionPreviewsLock = new();
     private DateTime _lastPreviewRequestUtc = DateTime.MinValue;
     private GatewayUsageInfo? _lastUsage;
     private GatewayUsageStatusInfo? _lastUsageStatus;
@@ -839,7 +840,13 @@ public partial class App : Application
                 var icon = session.IsMain ? "⭐" : "•";
                 menu.AddMenuItem(displayName, icon, $"session:{session.Key}", indent: true);
 
-                if (_sessionPreviews.TryGetValue(session.Key, out var preview))
+                SessionPreviewInfo? preview;
+                lock (_sessionPreviewsLock)
+                {
+                    _sessionPreviews.TryGetValue(session.Key, out preview);
+                }
+
+                if (preview != null)
                 {
                     var previewText = preview.Items.FirstOrDefault(i => !string.IsNullOrWhiteSpace(i.Text))?.Text;
                     if (!string.IsNullOrWhiteSpace(previewText))
@@ -1298,9 +1305,12 @@ public partial class App : Application
         _lastSessions = sessions;
 
         var activeKeys = new HashSet<string>(sessions.Select(s => s.Key), StringComparer.Ordinal);
-        var stale = _sessionPreviews.Keys.Where(key => !activeKeys.Contains(key)).ToArray();
-        foreach (var key in stale)
-            _sessionPreviews.Remove(key);
+        lock (_sessionPreviewsLock)
+        {
+            var stale = _sessionPreviews.Keys.Where(key => !activeKeys.Contains(key)).ToArray();
+            foreach (var key in stale)
+                _sessionPreviews.Remove(key);
+        }
 
         if (_gatewayClient != null &&
             sessions.Length > 0 &&
@@ -1355,9 +1365,12 @@ public partial class App : Application
 
     private void OnSessionPreviewUpdated(object? sender, SessionsPreviewPayloadInfo payload)
     {
-        foreach (var preview in payload.Previews)
+        lock (_sessionPreviewsLock)
         {
-            _sessionPreviews[preview.Key] = preview;
+            foreach (var preview in payload.Previews)
+            {
+                _sessionPreviews[preview.Key] = preview;
+            }
         }
     }
 

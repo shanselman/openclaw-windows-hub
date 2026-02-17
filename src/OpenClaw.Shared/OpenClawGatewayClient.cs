@@ -33,6 +33,14 @@ public class OpenClawGatewayClient : IDisposable
     private bool _sessionPreviewUnsupported;
     private bool _nodeListUnsupported;
 
+    private void ResetUnsupportedMethodFlags()
+    {
+        _usageStatusUnsupported = false;
+        _usageCostUnsupported = false;
+        _sessionPreviewUnsupported = false;
+        _nodeListUnsupported = false;
+    }
+
     // Events
     public event EventHandler<ConnectionStatus>? StatusChanged;
     public event EventHandler<OpenClawNotification>? NotificationReceived;
@@ -72,6 +80,7 @@ public class OpenClawGatewayClient : IDisposable
             
             await _webSocket.ConnectAsync(uri, _cts.Token);
 
+            ResetUnsupportedMethodFlags();
             _reconnectAttempts = 0;
             _logger.Info("Gateway connected, waiting for challenge...");
 
