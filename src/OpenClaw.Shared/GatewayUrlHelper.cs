@@ -14,6 +14,21 @@ public static class GatewayUrlHelper
             ? normalizedUrl
             : gatewayUrl?.Trim() ?? string.Empty;
 
+    public static string? ExtractCredentials(string gatewayUrl)
+    {
+        if (string.IsNullOrWhiteSpace(gatewayUrl))
+        {
+            return null;
+        }
+
+        if (!Uri.TryCreate(gatewayUrl.Trim(), UriKind.Absolute, out var uri))
+        {
+            return null;
+        }
+
+        return string.IsNullOrEmpty(uri.UserInfo) ? null : uri.UserInfo;
+    }
+
     public static bool TryNormalizeWebSocketUrl(string? gatewayUrl, out string normalizedUrl)
     {
         normalizedUrl = string.Empty;
@@ -57,3 +72,4 @@ public static class GatewayUrlHelper
         return false;
     }
 }
+

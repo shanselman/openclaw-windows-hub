@@ -33,4 +33,43 @@ public class GatewayUrlHelperTests
         Assert.False(result);
         Assert.Equal(string.Empty, normalized);
     }
+
+    [Theory]
+    [InlineData("wss://user:pass@example.com", "user:pass")]
+    [InlineData("wss://mytoken:secretkey@gateway.example.org", "mytoken:secretkey")]
+    [InlineData("wss://apikey:secrettoken@gateway.example.org", "apikey:secrettoken")]
+    [InlineData("ws://user:pass@localhost:18789", "user:pass")]
+    [InlineData("https://user:pass@example.com", "user:pass")]
+    [InlineData("http://user:pass@localhost:8080", "user:pass")]
+    public void ExtractCredentials_ExtractsCredentialsFromUrl(string inputUrl, string expectedToken)
+    {
+        var token = GatewayUrlHelper.ExtractCredentials(inputUrl);
+        Assert.Equal(expectedToken, token);
+    }
+
+    [Theory]
+    [InlineData("wss://example.com")]
+    [InlineData("wss://gateway.example.org")]
+    [InlineData("ws://localhost:18789")]
+    [InlineData("https://example.com")]
+    [InlineData("http://localhost:8080")]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("not-a-url")]
+    public void ExtractCredentials_ReturnsNullWhenNoCredentials(string inputUrl)
+    {
+        var credentials = GatewayUrlHelper.ExtractCredentials(inputUrl);
+        Assert.Null(credentials);
+    }
+
+    [Theory]
+    [InlineData("wss://user:pass@example.com/path/to/endpoint", "wss://user:pass@example.com/path/to/endpoint")]
+    [InlineData("wss://user:pass@host.com:8443/api", "wss://user:pass@host.com:8443/api")]
+    public void TryNormalizeWebSocketUrl_PreservesPathAndCredentials(string inputUrl, string expectedUrl)
+    {
+        var result = GatewayUrlHelper.TryNormalizeWebSocketUrl(inputUrl, out var normalized);
+
+        Assert.True(result);
+        Assert.Equal(expectedUrl, normalized);
+    }
 }
