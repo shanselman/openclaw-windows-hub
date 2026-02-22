@@ -142,7 +142,6 @@ public class WindowsNodeClient : IDisposable
         {
             _logger.Error("Node connection failed", ex);
             StatusChanged?.Invoke(this, ConnectionStatus.Error);
-            throw;
         }
     }
     

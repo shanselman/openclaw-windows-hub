@@ -91,7 +91,6 @@ public class OpenClawGatewayClient : IDisposable
         {
             _logger.Error("Connection failed", ex);
             StatusChanged?.Invoke(this, ConnectionStatus.Error);
-            throw;
         }
     }
 
